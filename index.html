@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>frankie seabrook</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000000;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            line-height: 1.4;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            cursor: crosshair;
+        }
+
+        #whiteboard-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .terminal {
+            width: 100%;
+            max-width: 600px;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .name {
+            font-family: 'Courier New', monospace;
+            font-size: 24px;
+            font-weight: normal;
+            letter-spacing: 2px;
+            margin-top: 20px;
+            text-transform: lowercase;
+            overflow: hidden;
+            white-space: nowrap;
+            border-right: 2px solid #fff;
+            animation: typing 2s steps(20, end), blink-caret 0.75s step-end infinite;
+        }
+
+        .name.animation-complete {
+            animation: blink-caret 0.75s step-end infinite;
+            border-right: 2px solid #fff;
+            width: 100%;
+        }
+
+        .nav.animation-complete {
+            opacity: 1;
+        }
+
+        .nav {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            opacity: 0;
+            animation: fadeIn 0.5s ease-in 2.5s forwards;
+        }
+
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: #fff; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .nav-item {
+            color: #fff;
+            text-decoration: none;
+            padding: 8px 16px;
+            border: 1px solid #fff;
+            transition: all 0.2s;
+            font-size: 16px;
+            letter-spacing: 1px;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10;
+            position: relative;
+            backdrop-filter: blur(2px);
+        }
+
+        .nav-item:hover {
+            background: #fff;
+            color: #000;
+        }
+
+        .whiteboard-content {
+            position: fixed;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 3;
+            box-shadow: 0 0 3px rgba(255,255,255,0.4), 0 0 6px rgba(255,255,255,0.2);
+            filter: blur(0.5px);
+        }
+
+        .whiteboard-line {
+            position: fixed;
+            background: rgba(255, 255, 255, 0.9);
+            pointer-events: none;
+            z-index: 3;
+            transform-origin: left center;
+            height: 3px;
+            border-radius: 2px;
+            box-shadow: 0 0 3px rgba(255,255,255,0.4), 0 0 6px rgba(255,255,255,0.2);
+            filter: blur(0.5px);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="whiteboard-canvas"></canvas>
+    <div id="home">
+        <div class="terminal">
+            <div class="name">frankieseabrook.com</div>
+            <div class="nav">
+                <a href="./cv.pdf" class="nav-item" download>download cv</a>
+            </div>
+        </div>
+    </div>
+
+  
+    <script>
+        let animationCompleted = false;
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+        let fadeInterval;
+        let whiteboardElements = [];
+
+        // Mark animation as complete after initial load
+        setTimeout(() => {
+            animationCompleted = true;
+            const nameElement = document.querySelector('.name');
+            const navElement = document.querySelector('.nav');
+
+            if (nameElement) {
+                nameElement.classList.add('animation-complete');
+            }
+            if (navElement) {
+                navElement.classList.add('animation-complete');
+            }
+        }, 3000);
+
+        // Canvas setup
+        const canvas = document.getElementById('whiteboard-canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Create whiteboard dot
+        function createWhiteboardDot(x, y) {
+            const dot = document.createElement('div');
+            dot.className = 'whiteboard-content';
+            dot.style.left = (x - 4) + 'px';
+            dot.style.top = (y - 4) + 'px';
+            dot.style.width = '8px';
+            dot.style.height = '8px';
+            dot.style.opacity = '0.8';
+
+            document.body.appendChild(dot);
+            whiteboardElements.push({
+                element: dot,
+                createdAt: Date.now(),
+                type: 'dot'
+            });
+        }
+
+        // Create whiteboard line
+        function createWhiteboardLine(x1, y1, x2, y2) {
+            const line = document.createElement('div');
+            line.className = 'whiteboard-line';
+
+            const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+            const angle = Math.atan2(y2 - y1, x2 - x1);
+
+            line.style.left = x1 + 'px';
+            line.style.top = (y1 - 1.5) + 'px';
+            line.style.width = distance + 'px';
+            line.style.transform = `rotate(${angle}rad)`;
+            line.style.opacity = '0.8';
+
+            document.body.appendChild(line);
+            whiteboardElements.push({
+                element: line,
+                createdAt: Date.now(),
+                type: 'line'
+            });
+        }
+
+        // Mouse event handlers
+        document.addEventListener('mousedown', function(event) {
+            // Don't draw if clicking on navigation links
+            if (event.target.classList.contains('nav-item') || event.target.closest('.terminal')) {
+                return;
+            }
+
+            isDrawing = true;
+            lastX = event.clientX;
+            lastY = event.clientY;
+            createWhiteboardDot(lastX, lastY);
+        });
+
+        document.addEventListener('mousemove', function(event) {
+            if (!isDrawing) return;
+
+            const currentX = event.clientX;
+            const currentY = event.clientY;
+
+            // Draw line from last position to current position
+            createWhiteboardLine(lastX, lastY, currentX, currentY);
+
+            lastX = currentX;
+            lastY = currentY;
+        });
+
+        document.addEventListener('mouseup', function(event) {
+            isDrawing = false;
+        });
+
+        document.addEventListener('mouseleave', function(event) {
+            isDrawing = false;
+        });
+
+        // Touch support for mobile
+        document.addEventListener('touchstart', function(event) {
+            if (event.target.classList.contains('nav-item') || event.target.closest('.terminal')) {
+                return;
+            }
+
+            isDrawing = true;
+            const touch = event.touches[0];
+            lastX = touch.clientX;
+            lastY = touch.clientY;
+            createWhiteboardDot(lastX, lastY);
+            event.preventDefault();
+        });
+
+        document.addEventListener('touchmove', function(event) {
+            if (!isDrawing) return;
+
+            const touch = event.touches[0];
+            const currentX = touch.clientX;
+            const currentY = touch.clientY;
+
+            createWhiteboardLine(lastX, lastY, currentX, currentY);
+
+            lastX = currentX;
+            lastY = currentY;
+            event.preventDefault();
+        });
+
+        document.addEventListener('touchend', function(event) {
+            isDrawing = false;
+            event.preventDefault();
+        });
+
+        // Fade out elements gradually
+        function fadeOutElements() {
+            const now = Date.now();
+            const fadeStartTime = 5000; // Start fading after 5 seconds
+            const fadeDuration = 10000; // Fade over 10 seconds
+
+            whiteboardElements = whiteboardElements.filter(item => {
+                const age = now - item.createdAt;
+
+                if (age > fadeStartTime + fadeDuration) {
+                    // Remove old elements
+                    item.element.remove();
+                    return false;
+                } else if (age > fadeStartTime) {
+                    // Calculate opacity based on age
+                    const fadeProgress = (age - fadeStartTime) / fadeDuration;
+                    const opacity = Math.max(0, 0.8 * (1 - fadeProgress));
+                    item.element.style.opacity = opacity;
+                }
+
+                return true;
+            });
+        }
+
+        // Start fade interval
+        fadeInterval = setInterval(fadeOutElements, 100);
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', function() {
+            clearInterval(fadeInterval);
+            whiteboardElements.forEach(item => item.element.remove());
+        });
+    </script>
+</body>
+</html>
