@@ -1,7 +1,7 @@
 ---
 title: "Hello, World!"
 description: "Welcome to my new blog. An introduction to what you can expect and why I started writing."
-date: 2024-01-15
+date: 2026-01-04
 tags: ["personal", "writing"]
 ---
 
@@ -21,9 +21,10 @@ There are a few reasons I wanted to create this space:
 
 I'll be writing about software development, with a focus on:
 
-- Web development and frontend engineering
+- Data and backend engineering
 - Developer tools and productivity
 - Programming best practices
+- Probably some AI stuff
 - Occasionally, thoughts on the broader tech industry
 
 I'm aiming for quality over quantity. I'd rather publish one well-researched, genuinely useful article per month than pump out shallow content every week.
@@ -31,5 +32,7 @@ I'm aiming for quality over quantity. I'd rather publish one well-researched, ge
 ## Let's Connect
 
 If you have feedback, questions, or just want to say hello, feel free to reach out. You can find my contact info on the [About page](/about).
+
+or follow me on X: @fifthfrankie
 
 Thanks for reading, and I hope you find something useful here!
