@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const pages = ['/', '/blog', '/blog/hello-world', '/cv'];
+const pages = ['/', '/blog', '/blog/hello-world', '/cv', '/portfolio'];
 
 test.describe('Theme Toggle', () => {
 	for (const page of pages) {
