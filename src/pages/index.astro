@@ -1,34 +1,67 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import { getCollection } from 'astro:content';
-
-const posts = (await getCollection('posts', ({ data }) => !data.draft))
-  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
-
-const formatDate = (date: Date) => {
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-};
+import Layout from '../layouts/Layout.astro';
 ---
 
-<BaseLayout title="Frankie Seabrook">
-  <h1 class="sr-only">Blog Posts</h1>
-  <ul class="post-list" role="list">
-    {posts.map((post) => (
-      <li>
-        <time class="post-date" datetime={post.data.date.toISOString()}>
-          {formatDate(post.data.date)}
-        </time>
-        <a href={`/posts/${post.id}`} class="post-title">
-          {post.data.title}
-        </a>
-      </li>
-    ))}
-  </ul>
-  {posts.length === 0 && (
-    <p>No posts yet. Check back soon!</p>
-  )}
-</BaseLayout>
+<Layout>
+	<main>
+		<h1 class="logo" data-text="frankie seabrook" data-alt="data consultant">frankie seabrook</h1>
+		<nav class="nav">
+			<a href="/portfolio">portfolio</a>
+			<a href="/cv">cv</a>
+			<a href="/blog">blog</a>
+		</nav>
+	</main>
+</Layout>
+
+<style>
+	:global(body) {
+		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+	}
+	main {
+		min-height: 100vh;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		text-align: center;
+	}
+	.logo {
+		font-size: clamp(2rem, 8vw, 5rem);
+		font-weight: 600;
+		letter-spacing: -0.02em;
+		margin: 0;
+	}
+	.nav {
+		display: flex;
+		gap: 2rem;
+		margin-top: 2rem;
+	}
+	.nav a {
+		color: var(--text);
+		text-decoration: none;
+		font-size: 1.25rem;
+	}
+	.nav a:hover {
+		opacity: 0.6;
+	}
+</style>
+
+<script>
+	const logo = document.querySelector('.logo') as HTMLElement;
+	const mainText = logo?.dataset.text || '';
+	const altText = logo?.dataset.alt || '';
+
+	function flicker() {
+		if (!logo) return;
+		logo.style.opacity = '0.1';
+		setTimeout(() => { logo.style.opacity = '1'; }, 80);
+		setTimeout(() => { logo.style.opacity = '0.5'; }, 150);
+		setTimeout(() => { logo.style.opacity = '1'; }, 200);
+		setTimeout(() => { logo.style.opacity = '0.1'; logo.textContent = altText; }, 280);
+		setTimeout(() => { logo.style.opacity = '1'; }, 360);
+		setTimeout(() => { logo.style.opacity = '0.1'; }, 500);
+		setTimeout(() => { logo.style.opacity = '1'; logo.textContent = mainText; }, 580);
+	}
+
+	setTimeout(() => { flicker(); setInterval(flicker, 5000); }, 2000);
+</script>
