@@ -20,3 +20,15 @@ playwright-report/
 # ide
 .idea/
 .vscode/
+
+# ai tools
+.cursor/
+.cursorrules
+.cursorignore
+CLAUDE.md
+.claude/
+project.toon
+.aider*
+.codeium/
+.continue/
+.windsurfrules
