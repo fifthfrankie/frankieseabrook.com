@@ -1,0 +1,389 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout>
+	<main>
+		<a href="/" class="back">< back</a>
+
+		<div id="login">
+			<h1>cv</h1>
+			<p>sort the bars from lowest to highest</p>
+			<div id="captcha">
+				<div class="bar" draggable="true" data-value="2" style="--h: 60%"></div>
+				<div class="bar" draggable="true" data-value="3" style="--h: 90%"></div>
+				<div class="bar" draggable="true" data-value="1" style="--h: 30%"></div>
+			</div>
+					</div>
+
+		<div id="cv" class="hidden">
+			<header>
+				<h1>frankie seabrook</h1>
+				<p class="role">senior bi consultant @ nationwide building society</p>
+				<p class="summary">4+ years building data systems and ai-powered analytics</p>
+				<a href="/Frankie_Seabrook_CV.pdf" download class="download">download full cv</a>
+			</header>
+
+			<section>
+				<h2>skills</h2>
+				<div class="skills-grid">
+					<div class="skill">
+						<div class="skill-header">
+							<span>sql / databricks</span>
+							<span class="skill-pct">95%</span>
+						</div>
+						<div class="skill-bar"><div class="skill-fill" style="--w: 95%"></div></div>
+					</div>
+					<div class="skill">
+						<div class="skill-header">
+							<span>power bi / dax</span>
+							<span class="skill-pct">90%</span>
+						</div>
+						<div class="skill-bar"><div class="skill-fill" style="--w: 90%"></div></div>
+					</div>
+					<div class="skill">
+						<div class="skill-header">
+							<span>python / pyspark</span>
+							<span class="skill-pct">80%</span>
+						</div>
+						<div class="skill-bar"><div class="skill-fill" style="--w: 80%"></div></div>
+					</div>
+					<div class="skill">
+						<div class="skill-header">
+							<span>ai / llm tooling</span>
+							<span class="skill-pct">80%</span>
+						</div>
+						<div class="skill-bar"><div class="skill-fill" style="--w: 80%"></div></div>
+					</div>
+					<div class="skill">
+						<div class="skill-header">
+							<span>devops / ci/cd</span>
+							<span class="skill-pct">70%</span>
+						</div>
+						<div class="skill-bar"><div class="skill-fill" style="--w: 70%"></div></div>
+					</div>
+				</div>
+			</section>
+
+			<section>
+				<h2>experience</h2>
+				<div class="timeline">
+					<div class="timeline-item">
+						<div class="timeline-dot"></div>
+						<div class="timeline-content">
+							<span class="timeline-date">2023–now</span>
+							<span class="timeline-title">senior bi consultant</span>
+							<span class="timeline-company">nationwide</span>
+						</div>
+					</div>
+					<div class="timeline-item">
+						<div class="timeline-dot"></div>
+						<div class="timeline-content">
+							<span class="timeline-date">2023</span>
+							<span class="timeline-title">bi engineer</span>
+							<span class="timeline-company">solent nhs</span>
+						</div>
+					</div>
+					<div class="timeline-item">
+						<div class="timeline-dot"></div>
+						<div class="timeline-content">
+							<span class="timeline-date">2022–23</span>
+							<span class="timeline-title">bi developer</span>
+							<span class="timeline-company">solent nhs</span>
+						</div>
+					</div>
+					<div class="timeline-item">
+						<div class="timeline-dot"></div>
+						<div class="timeline-content">
+							<span class="timeline-date">2021–22</span>
+							<span class="timeline-title">intelligence officer</span>
+							<span class="timeline-company">solent nhs</span>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<section>
+				<h2>technologies</h2>
+				<div class="tags">
+					<span class="tag">azure</span>
+					<span class="tag">databricks</span>
+					<span class="tag">sql</span>
+					<span class="tag">python</span>
+					<span class="tag">pyspark</span>
+					<span class="tag">dax</span>
+					<span class="tag">power bi</span>
+					<span class="tag">tableau</span>
+					<span class="tag">ssms</span>
+					<span class="tag">teradata</span>
+					<span class="tag">etl</span>
+					<span class="tag">data engineering</span>
+					<span class="tag">medallion architecture</span>
+					<span class="tag">semantic layers</span>
+					<span class="tag">git</span>
+					<span class="tag">github</span>
+					<span class="tag">azure devops</span>
+					<span class="tag">ci/cd</span>
+					<span class="tag">jira</span>
+					<span class="tag">confluence</span>
+					<span class="tag">llm</span>
+					<span class="tag">copilot</span>
+				</div>
+			</section>
+
+			</div>
+	</main>
+</Layout>
+
+<style>
+	:global(body) {
+		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+	}
+	main {
+		max-width: 600px;
+		margin: 0 auto;
+		padding: 4rem 2rem;
+	}
+	.back {
+		color: var(--text);
+		text-decoration: none;
+		opacity: 0.6;
+	}
+	.back:hover { opacity: 1; }
+	.hidden { display: none; }
+
+	/* login */
+	#login {
+		margin-top: 4rem;
+		text-align: center;
+	}
+	#login h1 {
+		font-size: 2rem;
+		margin: 0 0 0.5rem;
+	}
+	#login p {
+		opacity: 0.5;
+		margin: 0 0 2rem;
+	}
+	#captcha {
+		display: flex;
+		align-items: flex-end;
+		justify-content: center;
+		gap: 1rem;
+		height: 120px;
+		margin-bottom: 2rem;
+	}
+	.bar {
+		width: 50px;
+		height: var(--h);
+		background: var(--text);
+		border-radius: 4px;
+		cursor: grab;
+		transition: transform 0.15s, opacity 0.15s;
+	}
+	.bar:hover {
+		transform: scale(1.05);
+	}
+	.bar.dragging {
+		opacity: 0.5;
+		cursor: grabbing;
+	}
+	.bar.over {
+		transform: scale(1.1);
+	}
+	
+	/* cv */
+	#cv header {
+		margin: 2rem 0 3rem;
+	}
+	#cv h1 {
+		font-size: 2.5rem;
+		margin: 0;
+	}
+	.role {
+		opacity: 0.6;
+		margin: 0.25rem 0 0;
+		font-size: 1.1rem;
+	}
+	.summary {
+		opacity: 0.4;
+		margin: 0.5rem 0 0;
+		font-size: 0.9rem;
+	}
+	section {
+		margin-bottom: 2.5rem;
+	}
+	h2 {
+		font-size: 0.75rem;
+		font-weight: 600;
+		opacity: 0.4;
+		margin: 0 0 1rem;
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+	}
+
+	/* skills */
+	.skills-grid {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+	.skill-header {
+		display: flex;
+		justify-content: space-between;
+		font-size: 0.9rem;
+		margin-bottom: 0.4rem;
+	}
+	.skill-pct {
+		opacity: 0.4;
+		font-variant-numeric: tabular-nums;
+	}
+	.skill-bar {
+		height: 4px;
+		background: var(--border);
+		border-radius: 2px;
+		overflow: hidden;
+	}
+	.skill-fill {
+		height: 100%;
+		width: var(--w);
+		background: var(--text);
+		border-radius: 2px;
+	}
+
+	/* timeline */
+	.timeline {
+		position: relative;
+		padding-left: 1.5rem;
+	}
+	.timeline::before {
+		content: '';
+		position: absolute;
+		left: 0;
+		top: 0.5rem;
+		bottom: 0.5rem;
+		width: 1px;
+		background: var(--border);
+	}
+	.timeline-item {
+		position: relative;
+		padding-bottom: 1.25rem;
+	}
+	.timeline-item:last-child {
+		padding-bottom: 0;
+	}
+	.timeline-dot {
+		position: absolute;
+		left: -1.5rem;
+		top: 0.35rem;
+		width: 7px;
+		height: 7px;
+		background: var(--text);
+		border-radius: 50%;
+		transform: translateX(-3px);
+	}
+	.timeline-content {
+		display: flex;
+		flex-direction: column;
+		gap: 0.1rem;
+	}
+	.timeline-date {
+		font-size: 0.75rem;
+		opacity: 0.4;
+		font-variant-numeric: tabular-nums;
+	}
+	.timeline-title {
+		font-weight: 500;
+	}
+	.timeline-company {
+		opacity: 0.5;
+		font-size: 0.9rem;
+	}
+
+	/* tags */
+	.tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+	.tag {
+		padding: 0.4rem 0.75rem;
+		background: var(--border);
+		border: 1px solid var(--border);
+		border-radius: 3px;
+		font-size: 0.8rem;
+		opacity: 0.8;
+	}
+
+	.download {
+		display: inline-block;
+		margin-top: 1.5rem;
+		background: var(--text);
+		color: var(--bg);
+		text-decoration: none;
+		padding: 0.6rem 1.25rem;
+		font-size: 0.9rem;
+		border-radius: 2rem;
+	}
+	.download:hover { opacity: 0.8; }
+</style>
+
+<script is:inline>
+	document.addEventListener('astro:page-load', () => {
+		const login = document.getElementById('login');
+		const cv = document.getElementById('cv');
+		const captcha = document.getElementById('captcha');
+
+		if (!login || !cv || !captcha) return;
+
+		let draggedEl = null;
+
+		function check() {
+			const bars = [...captcha.querySelectorAll('.bar')];
+			const values = bars.map(b => parseInt(b.dataset.value));
+			const sorted = values.every((v, i) => i === 0 || values[i - 1] <= v);
+
+			if (sorted) {
+				login.classList.add('hidden');
+				cv.classList.remove('hidden');
+			}
+		}
+
+		captcha.querySelectorAll('.bar').forEach(bar => {
+			bar.addEventListener('dragstart', (e) => {
+				draggedEl = e.target;
+				e.target.classList.add('dragging');
+			});
+
+			bar.addEventListener('dragend', (e) => {
+				e.target.classList.remove('dragging');
+				draggedEl = null;
+				check();
+			});
+
+			bar.addEventListener('dragover', (e) => {
+				e.preventDefault();
+				e.target.classList.add('over');
+			});
+
+			bar.addEventListener('dragleave', (e) => {
+				e.target.classList.remove('over');
+			});
+
+			bar.addEventListener('drop', (e) => {
+				e.preventDefault();
+				e.target.classList.remove('over');
+				if (draggedEl && draggedEl !== e.target) {
+					const allBars = [...captcha.querySelectorAll('.bar')];
+					const draggedIdx = allBars.indexOf(draggedEl);
+					const targetIdx = allBars.indexOf(e.target);
+					if (draggedIdx < targetIdx) {
+						e.target.after(draggedEl);
+					} else {
+						e.target.before(draggedEl);
+					}
+				}
+			});
+		});
+	});
+</script>
