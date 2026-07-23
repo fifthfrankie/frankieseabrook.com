@@ -5,12 +5,61 @@ import Layout from '../layouts/Layout.astro';
 <Layout>
 	<main>
 		<a href="/" class="back">< back</a>
+
+		<div id="dash">
+			<header>
+				<h1>charles</h1>
+				<p class="subtitle">spotify top 500 artists by monthly listeners, worldwide</p>
+			</header>
+
+			<div id="status">loading…</div>
+
+			<div id="content" class="hidden">
+				<div class="stats">
+					<div class="stat stat-wide">
+						<span class="stat-label">world listeners (top 500)</span>
+						<span class="stat-value" id="total-listeners"></span>
+						<span class="stat-sub" id="total-daily"></span>
+					</div>
+					<div class="stat">
+						<span class="stat-label">dod</span>
+						<span class="stat-value" id="total-dod"></span>
+					</div>
+					<div class="stat">
+						<span class="stat-label">wow</span>
+						<span class="stat-value" id="total-wow"></span>
+					</div>
+					<div class="stat">
+						<span class="stat-label">mom</span>
+						<span class="stat-value" id="total-mom"></span>
+					</div>
+				</div>
+
+				<input type="search" id="search" placeholder="filter artists…" autocomplete="off" />
+
+				<table>
+					<thead>
+						<tr>
+							<th class="num">#</th>
+							<th>artist</th>
+							<th class="num">monthly listeners</th>
+							<th class="num">dod</th>
+							<th class="num">wow</th>
+							<th class="num">mom</th>
+						</tr>
+					</thead>
+					<tbody id="rows"></tbody>
+				</table>
+
+				<p class="footnote" id="footnote"></p>
+			</div>
+		</div>
 	</main>
 </Layout>
 
 <style>
 	main {
-		max-width: 600px;
+		max-width: 960px;
 		margin: 0 auto;
 		padding: 4rem 2rem;
 	}
@@ -20,4 +69,239 @@ import Layout from '../layouts/Layout.astro';
 		opacity: 0.6;
 	}
 	.back:hover { opacity: 1; }
+	.hidden { display: none; }
+
+	header { margin: 2rem 0; }
+	h1 {
+		font-size: 2.5rem;
+		margin: 0;
+	}
+	.subtitle {
+		opacity: 0.5;
+		margin: 0.25rem 0 0;
+	}
+
+	#status {
+		opacity: 0.5;
+		padding: 2rem 0;
+	}
+
+	/* stats */
+	.stats {
+		display: grid;
+		grid-template-columns: 2fr 1fr 1fr 1fr;
+		gap: 0.75rem;
+		margin-bottom: 2rem;
+	}
+	.stat {
+		border: 1px solid var(--border);
+		border-radius: 6px;
+		padding: 1rem 1.25rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+	.stat-label {
+		font-size: 0.7rem;
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		opacity: 0.4;
+	}
+	.stat-value {
+		font-size: 1.5rem;
+		font-weight: 600;
+		font-variant-numeric: tabular-nums;
+	}
+	.stat-sub {
+		font-size: 0.8rem;
+		opacity: 0.5;
+		font-variant-numeric: tabular-nums;
+	}
+	@media (max-width: 700px) {
+		.stats { grid-template-columns: 1fr 1fr; }
+		.stat-wide { grid-column: span 2; }
+	}
+
+	/* search */
+	#search {
+		width: 100%;
+		box-sizing: border-box;
+		background: none;
+		border: 1px solid var(--border);
+		border-radius: 6px;
+		color: var(--text);
+		padding: 0.6rem 0.9rem;
+		font-size: 0.9rem;
+		margin-bottom: 1rem;
+		outline: none;
+	}
+	#search:focus { border-color: var(--text-muted); }
+
+	/* table */
+	table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: 0.9rem;
+	}
+	th {
+		text-align: left;
+		font-size: 0.7rem;
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		opacity: 0.4;
+		font-weight: 600;
+		padding: 0.5rem 0.75rem;
+		border-bottom: 1px solid var(--border);
+	}
+	th.num { text-align: right; }
+	:global(#rows td) {
+		padding: 0.5rem 0.75rem;
+		border-bottom: 1px solid var(--border);
+		vertical-align: middle;
+	}
+	:global(#rows td.num) {
+		text-align: right;
+		font-variant-numeric: tabular-nums;
+		white-space: nowrap;
+	}
+	:global(#rows .rank) { opacity: 0.4; }
+	:global(#rows .artist) {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+	}
+	:global(#rows .artist img) {
+		width: 28px;
+		height: 28px;
+		border-radius: 50%;
+		object-fit: cover;
+		background: var(--border);
+	}
+	:global(#rows .noimg) {
+		width: 28px;
+		height: 28px;
+		border-radius: 50%;
+		background: var(--border);
+		flex-shrink: 0;
+	}
+	:global(.up) { color: #22c55e; }
+	:global(.down) { color: #ef4444; }
+	:global(.flat) { opacity: 0.35; }
+	:global(.entered) {
+		color: #eab308;
+		font-size: 0.75rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+	:global(.delta) {
+		display: block;
+		font-size: 0.7rem;
+		opacity: 0.45;
+	}
+
+	.footnote {
+		margin-top: 2rem;
+		font-size: 0.75rem;
+		opacity: 0.4;
+	}
+	.footnote :global(a) { color: var(--text); }
 </style>
+
+<script is:inline>
+	document.addEventListener('astro:page-load', async () => {
+		const dash = document.getElementById('dash');
+		if (!dash || dash.dataset.loaded) return;
+		dash.dataset.loaded = '1';
+
+		const status = document.getElementById('status');
+		const content = document.getElementById('content');
+
+		const esc = (s) =>
+			String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+		const fmt = (n) => {
+			const a = Math.abs(n);
+			if (a >= 1e9) return (n / 1e9).toFixed(2) + 'b';
+			if (a >= 1e6) return (n / 1e6).toFixed(1) + 'm';
+			if (a >= 1e3) return (n / 1e3).toFixed(0) + 'k';
+			return String(n);
+		};
+		const signed = (n) => (n > 0 ? '+' : '') + fmt(n);
+
+		const rankCell = (mv, fallbackDelta) => {
+			if (mv === null) {
+				const sub = fallbackDelta !== undefined ? `<span class="delta">${signed(fallbackDelta)}</span>` : '';
+				return `<span class="flat">—</span>${sub}`;
+			}
+			if (mv.entered) return '<span class="entered">new</span>';
+			const arrow =
+				mv.rank > 0
+					? `<span class="up">▲${mv.rank}</span>`
+					: mv.rank < 0
+						? `<span class="down">▼${-mv.rank}</span>`
+						: '<span class="flat">=</span>';
+			return `${arrow}<span class="delta">${signed(mv.listeners)}</span>`;
+		};
+
+		const totalCell = (id, v) => {
+			const el = document.getElementById(id);
+			if (v === null || v === undefined) {
+				el.textContent = '—';
+				el.classList.add('flat');
+			} else {
+				el.textContent = signed(v);
+				el.classList.add(v > 0 ? 'up' : v < 0 ? 'down' : 'flat');
+			}
+		};
+
+		let data;
+		try {
+			const res = await fetch('/api/top500');
+			if (!res.ok) throw new Error('api returned ' + res.status);
+			data = await res.json();
+			if (data.error) throw new Error(data.error);
+		} catch (err) {
+			status.textContent = 'failed to load data: ' + err.message;
+			return;
+		}
+
+		document.getElementById('total-listeners').textContent = fmt(data.totals.listeners);
+		document.getElementById('total-daily').textContent =
+			signed(data.totals.dailyChange) + ' today';
+		totalCell('total-dod', data.totals.dod ?? data.totals.dailyChange);
+		totalCell('total-wow', data.totals.wow);
+		totalCell('total-mom', data.totals.mom);
+
+		const rows = document.getElementById('rows');
+		rows.innerHTML = data.rows
+			.map((r) => {
+				const img = r.image
+					? `<img src="${esc(r.image)}" alt="" loading="lazy" />`
+					: '<span class="noimg"></span>';
+				return `<tr data-name="${esc(r.name.toLowerCase())}">
+					<td class="num rank">${r.rank}</td>
+					<td><span class="artist">${img}<span title="peak: #${r.peak ?? '?'}">${esc(r.name)}</span></span></td>
+					<td class="num" title="${r.listeners.toLocaleString()}">${fmt(r.listeners)}</td>
+					<td class="num">${rankCell(r.dod, r.dailyChange)}</td>
+					<td class="num">${rankCell(r.wow)}</td>
+					<td class="num">${rankCell(r.mom)}</td>
+				</tr>`;
+			})
+			.join('');
+
+		const compared = ['dod', 'wow', 'mom']
+			.map((k) => `${k} vs ${data.compared[k] ?? 'n/a (history accumulating)'}`)
+			.join(' · ');
+		document.getElementById('footnote').innerHTML =
+			`data: <a href="https://kworb.net/spotify/listeners.html">kworb.net</a> + spotify api · updated ${esc(data.generatedAt.slice(0, 16).replace('T', ' '))} utc · ${esc(compared)}`;
+
+		document.getElementById('search').addEventListener('input', (e) => {
+			const q = e.target.value.trim().toLowerCase();
+			for (const tr of rows.children) {
+				tr.style.display = !q || tr.dataset.name.includes(q) ? '' : 'none';
+			}
+		});
+
+		status.classList.add('hidden');
+		content.classList.remove('hidden');
+	});
+</script>
