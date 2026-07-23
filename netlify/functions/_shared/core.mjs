@@ -1,5 +1,8 @@
 import { getStore } from '@netlify/blobs';
 
+// strong consistency so consecutive refreshes see each other's writes
+export const blobStore = () => getStore({ name: 'top500', consistency: 'strong' });
+
 const KWORB_URL = 'https://kworb.net/spotify/listeners.html';
 const TOP_N = 500;
 const RETENTION_DAYS = 400;
@@ -89,7 +92,10 @@ async function resolveImages(store, ids, meta) {
 	for (const [id, m] of Object.entries(meta)) {
 		if (m.image) cache[id] = { url: m.image, src: 'api', at: Date.now() };
 	}
-	const missing = ids.filter((id) => !cache[id]?.url).slice(0, OEMBED_BATCH);
+	const missing = ids
+		.filter((id) => !cache[id]?.url)
+		.sort(() => Math.random() - 0.5)
+		.slice(0, OEMBED_BATCH);
 	for (let i = 0; i < missing.length; i += OEMBED_CONCURRENCY) {
 		await Promise.all(
 			missing.slice(i, i + OEMBED_CONCURRENCY).map(async (id) => {
@@ -131,7 +137,7 @@ export async function refresh() {
 	const artists = parseKworb(await res.text()).slice(0, TOP_N);
 	if (artists.length < 400) throw new Error(`kworb parse returned only ${artists.length} rows`);
 
-	const store = getStore('top500');
+	const store = blobStore();
 	const today = dateKey(new Date());
 	await store.setJSON(
 		`snap/${today}`,
