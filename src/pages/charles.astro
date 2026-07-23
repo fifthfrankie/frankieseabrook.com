@@ -7,297 +7,373 @@ import Layout from '../layouts/Layout.astro';
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 	<link
 		rel="stylesheet"
-		href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap"
+		href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
 	/>
 
-	<main>
-		<a href="/" class="back">< back</a>
-
-		<div id="dash">
-			<header>
-				<h1>charles</h1>
-				<p class="subtitle">spotify top 500 artists by monthly listeners, worldwide</p>
-			</header>
-
-			<div id="status">loading…</div>
-
-			<div id="content" class="hidden">
-				<div class="stats">
-					<div class="stat stat-wide">
-						<span class="stat-label">world listeners (top 500)</span>
-						<span class="stat-value" id="total-listeners"></span>
-						<span class="stat-sub" id="total-daily"></span>
-					</div>
-					<div class="stat">
-						<span class="stat-label">day on day</span>
-						<span class="stat-value" id="total-dod"></span>
-						<span class="stat-sub" id="cmp-dod"></span>
-					</div>
-					<div class="stat">
-						<span class="stat-label">week on week</span>
-						<span class="stat-value" id="total-wow"></span>
-						<span class="stat-sub" id="cmp-wow"></span>
-					</div>
-					<div class="stat">
-						<span class="stat-label">month on month</span>
-						<span class="stat-value" id="total-mom"></span>
-						<span class="stat-sub" id="cmp-mom"></span>
-					</div>
-				</div>
-
-				<div class="movers">
-					<div class="panel">
-						<h2 id="climbers-title">climbers</h2>
-						<div id="climbers"></div>
-					</div>
-					<div class="panel">
-						<h2 id="fallers-title">fallers</h2>
-						<div id="fallers"></div>
-					</div>
-				</div>
-
-				<div class="toolbar">
-					<div class="seg" id="viewseg">
-						<button type="button" data-view="cards">cards</button>
-						<button type="button" data-view="table">table</button>
-					</div>
-					<input type="search" id="search" placeholder="filter artists…" autocomplete="off" />
-				</div>
-
-				<div id="cards"></div>
-
-				<div id="tablewrap" class="hidden">
-					<table>
-						<thead>
-							<tr>
-								<th class="num">#</th>
-								<th>artist</th>
-								<th class="num">monthly listeners</th>
-								<th class="num">dod</th>
-								<th class="num">wow</th>
-								<th class="num">mom</th>
-							</tr>
-						</thead>
-						<tbody id="rows"></tbody>
-					</table>
-				</div>
-
-				<p class="footnote" id="footnote"></p>
-			</div>
+	<main class="ch" id="dash">
+		<div class="topbar">
+			<a href="/" class="back" title="back to frankieseabrook.com">←</a>
+			<span class="wordmark">charles</span>
+			<nav class="tabs" id="tabs">
+				<a href="#/overview" data-route="overview">overview</a>
+				<a href="#/artists" data-route="artists">artists</a>
+				<a href="#/table" data-route="table">table</a>
+			</nav>
+			<input type="search" id="search" placeholder="search artists ( / )" autocomplete="off" />
 		</div>
+
+		<div id="status">
+			<div class="skeleton sk-kpis"></div>
+			<div class="skeleton sk-chart"></div>
+			<div class="skeleton sk-grid"></div>
+		</div>
+
+		<section id="view-overview" class="view hidden">
+			<div class="kpis" id="kpis"></div>
+			<div class="grid">
+				<div class="panel span-full">
+					<div class="panel-head">
+						<h2>world listeners · top 500 combined</h2>
+						<div class="ranges" id="ranges"></div>
+					</div>
+					<div id="trend" class="chartbox"></div>
+				</div>
+				<div class="panel span-half">
+					<div class="panel-head"><h2>top 10 by monthly listeners</h2></div>
+					<div id="top10"></div>
+				</div>
+				<div class="panel span-half">
+					<div class="panel-head"><h2>listeners by rank · the long tail</h2></div>
+					<div id="decay" class="chartbox"></div>
+				</div>
+				<div class="panel span-half">
+					<div class="panel-head"><h2 id="climbers-title">top climbers</h2></div>
+					<div id="climbers"></div>
+				</div>
+				<div class="panel span-half">
+					<div class="panel-head"><h2 id="fallers-title">top fallers</h2></div>
+					<div id="fallers"></div>
+				</div>
+			</div>
+		</section>
+
+		<section id="view-artists" class="view hidden">
+			<div id="cards"></div>
+		</section>
+
+		<section id="view-table" class="view hidden">
+			<div class="tscroll">
+				<table>
+					<thead id="thead"></thead>
+					<tbody id="rows"></tbody>
+				</table>
+			</div>
+		</section>
+
+		<div id="overlay" class="hidden">
+			<div class="detail" id="detail"></div>
+		</div>
+
+		<div id="tooltip" class="hidden"></div>
+		<p class="footnote" id="footnote"></p>
 	</main>
 </Layout>
 
-<style>
-	main {
-		max-width: 1100px;
+<style is:global>
+	.ch {
+		--accent: #1db954;
+		--up: #22c55e;
+		--down: #ef4444;
+		--panel: color-mix(in srgb, var(--text) 3%, transparent);
+		--panel-hover: color-mix(in srgb, var(--text) 6%, transparent);
+		max-width: 1200px;
 		margin: 0 auto;
-		padding: 4rem 2rem;
+		padding: 2rem 2rem 4rem;
 		font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 	}
-	.back {
+	.ch .hidden { display: none !important; }
+
+	/* ---------- topbar ---------- */
+	.ch .topbar {
+		display: flex;
+		align-items: center;
+		gap: 1.25rem;
+		padding: 0.75rem 0 1.5rem;
+		position: sticky;
+		top: 0;
+		background: linear-gradient(var(--bg) 75%, transparent);
+		z-index: 50;
+	}
+	.ch .back {
 		color: var(--text);
 		text-decoration: none;
-		opacity: 0.6;
+		opacity: 0.5;
+		font-size: 1.1rem;
 	}
-	.back:hover { opacity: 1; }
-	/* !important so it beats ID-selector display rules (e.g. #cards) */
-	.hidden { display: none !important; }
-
-	header { margin: 2rem 0; }
-	h1 {
+	.ch .back:hover { opacity: 1; }
+	.ch .wordmark {
 		font-family: 'Space Grotesk', sans-serif;
-		font-size: 2.75rem;
+		font-size: 1.35rem;
 		font-weight: 700;
 		letter-spacing: -0.02em;
-		margin: 0;
 	}
-	.subtitle {
-		opacity: 0.5;
-		margin: 0.35rem 0 0;
-		font-size: 0.95rem;
+	.ch .tabs {
+		display: flex;
+		gap: 0.25rem;
+		border: 1px solid var(--border);
+		border-radius: 999px;
+		padding: 0.2rem;
+	}
+	.ch .tabs a {
+		color: var(--text);
+		text-decoration: none;
+		font-size: 0.82rem;
+		padding: 0.35rem 0.9rem;
+		border-radius: 999px;
+		opacity: 0.55;
+	}
+	.ch .tabs a:hover { opacity: 0.9; }
+	.ch .tabs a.active {
+		opacity: 1;
+		background: color-mix(in srgb, var(--text) 9%, transparent);
+	}
+	.ch #search {
+		margin-left: auto;
+		width: 220px;
+		background: none;
+		border: 1px solid var(--border);
+		border-radius: 999px;
+		color: var(--text);
+		padding: 0.45rem 1rem;
+		font-family: inherit;
+		font-size: 0.85rem;
+		outline: none;
+		transition: width 0.15s, border-color 0.15s;
+	}
+	.ch #search:focus {
+		border-color: var(--accent);
+		width: 280px;
 	}
 
-	#status {
-		opacity: 0.5;
-		padding: 2rem 0;
+	/* ---------- skeletons ---------- */
+	.ch .skeleton {
+		border-radius: 12px;
+		background: linear-gradient(100deg, var(--panel) 40%, var(--panel-hover) 50%, var(--panel) 60%);
+		background-size: 200% 100%;
+		animation: ch-shimmer 1.4s infinite;
+		margin-bottom: 1rem;
 	}
+	.ch .sk-kpis { height: 110px; }
+	.ch .sk-chart { height: 280px; }
+	.ch .sk-grid { height: 320px; }
+	@keyframes ch-shimmer { to { background-position: -200% 0; } }
 
-	/* stats */
-	.stats {
+	/* ---------- kpis ---------- */
+	.ch .kpis {
 		display: grid;
 		grid-template-columns: 2fr 1fr 1fr 1fr;
 		gap: 0.75rem;
 		margin-bottom: 0.75rem;
 	}
-	.stat {
+	.ch .kpi {
 		border: 1px solid var(--border);
-		border-radius: 10px;
+		border-radius: 12px;
 		padding: 1.1rem 1.3rem;
+		background: var(--panel);
 		display: flex;
 		flex-direction: column;
 		gap: 0.3rem;
-		background: color-mix(in srgb, var(--text) 3%, transparent);
 	}
-	.stat-label {
-		font-size: 0.68rem;
+	.ch .kpi-label {
+		font-size: 0.66rem;
 		text-transform: uppercase;
-		letter-spacing: 0.12em;
-		opacity: 0.4;
+		letter-spacing: 0.14em;
+		opacity: 0.45;
 	}
-	.stat-value {
+	.ch .kpi-value {
 		font-family: 'Space Grotesk', sans-serif;
-		font-size: 1.8rem;
+		font-size: 1.9rem;
 		font-weight: 600;
 		font-variant-numeric: tabular-nums;
 		letter-spacing: -0.01em;
 	}
-	.stat-sub {
+	.ch .kpi-sub {
 		font-size: 0.75rem;
 		opacity: 0.5;
 		font-variant-numeric: tabular-nums;
 	}
 
-	/* movers */
-	.movers {
+	/* ---------- panels / grid ---------- */
+	.ch .grid {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
 		gap: 0.75rem;
-		margin-bottom: 2rem;
 	}
-	.panel {
+	.ch .span-full { grid-column: 1 / -1; }
+	.ch .panel {
 		border: 1px solid var(--border);
-		border-radius: 10px;
-		padding: 1rem 1.3rem;
-		background: color-mix(in srgb, var(--text) 3%, transparent);
+		border-radius: 12px;
+		padding: 1.1rem 1.3rem;
+		background: var(--panel);
+		min-width: 0;
 	}
-	.panel h2 {
-		font-size: 0.68rem;
+	.ch .panel-head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 0.9rem;
+	}
+	.ch .panel h2 {
+		font-size: 0.66rem;
 		font-weight: 600;
 		text-transform: uppercase;
-		letter-spacing: 0.12em;
-		opacity: 0.4;
-		margin: 0 0 0.75rem;
+		letter-spacing: 0.14em;
+		opacity: 0.45;
+		margin: 0;
 	}
-	:global(.mover) {
+	.ch .ranges { display: flex; gap: 0.25rem; }
+	.ch .ranges button {
+		font-family: inherit;
+		font-size: 0.72rem;
+		background: none;
+		border: 1px solid var(--border);
+		border-radius: 999px;
+		color: var(--text);
+		opacity: 0.55;
+		padding: 0.2rem 0.65rem;
+		cursor: pointer;
+	}
+	.ch .ranges button.active {
+		opacity: 1;
+		border-color: var(--accent);
+		color: var(--accent);
+	}
+
+	/* ---------- charts ---------- */
+	.ch .chartbox { position: relative; }
+	.ch .chartbox svg { display: block; width: 100%; height: auto; }
+	.ch .chart-note {
+		font-size: 0.78rem;
+		opacity: 0.45;
+		padding: 2rem 0;
+		text-align: center;
+	}
+	.ch .axis {
+		font-size: 11px;
+		fill: var(--text);
+		opacity: 0.35;
+		font-family: 'Inter', sans-serif;
+		font-variant-numeric: tabular-nums;
+	}
+	.ch .gridline { stroke: var(--border); stroke-width: 1; }
+	#tooltip {
+		position: fixed;
+		z-index: 200;
+		pointer-events: none;
+		background: var(--bg);
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		padding: 0.45rem 0.7rem;
+		font-size: 0.75rem;
+		font-family: 'Inter', sans-serif;
+		font-variant-numeric: tabular-nums;
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+		white-space: nowrap;
+	}
+	#tooltip .t-title { font-weight: 600; }
+	#tooltip .t-sub { opacity: 0.6; }
+
+	/* ---------- top10 bars ---------- */
+	.ch .bar-row {
+		display: grid;
+		grid-template-columns: 26px 26px minmax(80px, 130px) 1fr 60px;
+		align-items: center;
+		gap: 0.6rem;
+		padding: 0.28rem 0;
+		font-size: 0.82rem;
+		cursor: pointer;
+		border-radius: 6px;
+	}
+	.ch .bar-row:hover { background: var(--panel-hover); }
+	.ch .bar-rank { opacity: 0.4; font-variant-numeric: tabular-nums; }
+	.ch .bar-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+	.ch .bar-track { height: 8px; border-radius: 4px; background: var(--border); overflow: hidden; }
+	.ch .bar-fill {
+		height: 100%;
+		border-radius: 4px;
+		background: var(--accent);
+		transition: width 0.6s cubic-bezier(0.2, 0.7, 0.3, 1);
+	}
+	.ch .bar-val { text-align: right; font-variant-numeric: tabular-nums; opacity: 0.7; }
+
+	/* ---------- movers ---------- */
+	.ch .mover {
 		display: flex;
 		align-items: center;
 		gap: 0.6rem;
-		padding: 0.3rem 0;
-		font-size: 0.85rem;
+		padding: 0.3rem 0.4rem;
+		font-size: 0.84rem;
+		cursor: pointer;
+		border-radius: 6px;
 	}
-	:global(.mover img),
-	:global(.mover .ph) {
+	.ch .mover:hover { background: var(--panel-hover); }
+	.ch .mover .mrank { opacity: 0.35; font-variant-numeric: tabular-nums; width: 2.4em; flex-shrink: 0; }
+	.ch .mover .mname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+	.ch .mover .mval { margin-left: auto; font-variant-numeric: tabular-nums; font-weight: 500; white-space: nowrap; }
+
+	/* ---------- avatars ---------- */
+	.ch .av, .ch .ph {
 		width: 26px;
 		height: 26px;
 		border-radius: 50%;
 		object-fit: cover;
 		flex-shrink: 0;
 	}
-	:global(.mover .mrank) {
-		opacity: 0.35;
-		font-variant-numeric: tabular-nums;
-		width: 2.2em;
-		flex-shrink: 0;
-	}
-	:global(.mover .mname) {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-	:global(.mover .mval) {
-		margin-left: auto;
-		font-variant-numeric: tabular-nums;
-		font-weight: 500;
-		white-space: nowrap;
+	.ch .ph {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		font-family: 'Space Grotesk', sans-serif;
+		font-weight: 700;
+		font-size: 0.8em;
+		opacity: 0.4;
+		background: var(--border);
 	}
 
-	/* toolbar */
-	.toolbar {
-		display: flex;
-		gap: 0.75rem;
-		margin-bottom: 1.25rem;
-	}
-	.seg {
-		display: flex;
-		border: 1px solid var(--border);
-		border-radius: 8px;
-		overflow: hidden;
-		flex-shrink: 0;
-	}
-	.seg button {
-		font-family: inherit;
-		font-size: 0.85rem;
-		background: none;
-		border: none;
-		color: var(--text);
-		opacity: 0.5;
-		padding: 0.55rem 1.1rem;
-		cursor: pointer;
-	}
-	.seg button:hover { opacity: 0.8; }
-	:global(.seg button.active) {
-		opacity: 1;
-		background: color-mix(in srgb, var(--text) 8%, transparent);
-	}
-	#search {
-		flex: 1;
-		box-sizing: border-box;
-		background: none;
-		border: 1px solid var(--border);
-		border-radius: 8px;
-		color: var(--text);
-		padding: 0.55rem 0.9rem;
-		font-family: inherit;
-		font-size: 0.9rem;
-		outline: none;
-	}
-	#search:focus { border-color: var(--text-muted); }
-
-	/* cards */
-	#cards {
+	/* ---------- cards ---------- */
+	.ch #cards {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
 		gap: 0.75rem;
 	}
-	:global(.card) {
+	.ch .card {
 		border: 1px solid var(--border);
-		border-radius: 10px;
+		border-radius: 12px;
 		padding: 0.6rem;
-		background: color-mix(in srgb, var(--text) 3%, transparent);
+		background: var(--panel);
+		cursor: pointer;
 		transition: transform 0.12s, border-color 0.12s;
 	}
-	:global(.card:hover) {
-		transform: translateY(-2px);
-		border-color: var(--text-muted);
+	.ch .card:hover {
+		transform: translateY(-3px);
+		border-color: var(--accent);
 	}
-	:global(.thumb) {
+	.ch .thumb {
 		position: relative;
 		aspect-ratio: 1;
-		border-radius: 7px;
+		border-radius: 8px;
 		overflow: hidden;
 		background: var(--border);
 		margin-bottom: 0.6rem;
 	}
-	:global(.thumb img) {
+	.ch .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+	.ch .thumb .ph {
 		width: 100%;
 		height: 100%;
-		object-fit: cover;
-		display: block;
-	}
-	:global(.ph) {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 100%;
-		height: 100%;
-		font-family: 'Space Grotesk', sans-serif;
+		border-radius: 0;
 		font-size: 2.5rem;
-		font-weight: 700;
-		opacity: 0.25;
-		background: var(--border);
 	}
-	:global(.rank-badge) {
+	.ch .rank-badge {
 		position: absolute;
 		top: 6px;
 		left: 6px;
@@ -311,26 +387,22 @@ import Layout from '../layouts/Layout.astro';
 		padding: 0.15rem 0.5rem;
 		backdrop-filter: blur(4px);
 	}
-	:global(.card-name) {
+	.ch .card-name {
 		font-size: 0.85rem;
 		font-weight: 500;
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}
-	:global(.card-listeners) {
+	.ch .card-listeners {
 		font-family: 'Space Grotesk', sans-serif;
 		font-size: 1.15rem;
 		font-weight: 600;
 		font-variant-numeric: tabular-nums;
 		margin: 0.1rem 0 0.5rem;
 	}
-	:global(.chips) {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.3rem;
-	}
-	:global(.chip) {
+	.ch .chips { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+	.ch .chip {
 		font-size: 0.66rem;
 		font-variant-numeric: tabular-nums;
 		border-radius: 999px;
@@ -338,79 +410,141 @@ import Layout from '../layouts/Layout.astro';
 		background: color-mix(in srgb, var(--text) 7%, transparent);
 		white-space: nowrap;
 	}
-	:global(.chip .lbl) { opacity: 0.5; margin-right: 0.25em; }
+	.ch .chip .lbl { opacity: 0.5; margin-right: 0.25em; }
 
-	/* table */
-	table {
-		width: 100%;
-		border-collapse: collapse;
-		font-size: 0.9rem;
-	}
-	th {
+	/* ---------- table ---------- */
+	.ch .tscroll { overflow-x: auto; }
+	.ch table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+	.ch th {
 		text-align: left;
-		font-size: 0.68rem;
+		font-size: 0.64rem;
 		text-transform: uppercase;
 		letter-spacing: 0.12em;
-		opacity: 0.4;
+		opacity: 0.45;
 		font-weight: 600;
-		padding: 0.5rem 0.75rem;
+		padding: 0.5rem 0.7rem;
 		border-bottom: 1px solid var(--border);
+		cursor: pointer;
+		user-select: none;
+		white-space: nowrap;
+		position: sticky;
+		top: 3.4rem;
+		background: var(--bg);
 	}
-	th.num { text-align: right; }
-	:global(#rows td) {
-		padding: 0.5rem 0.75rem;
+	.ch th:hover { opacity: 0.8; }
+	.ch th.num { text-align: right; }
+	.ch th .arr { color: var(--accent); }
+	.ch td {
+		padding: 0.45rem 0.7rem;
 		border-bottom: 1px solid var(--border);
 		vertical-align: middle;
 	}
-	:global(#rows td.num) {
-		text-align: right;
-		font-variant-numeric: tabular-nums;
-		white-space: nowrap;
-	}
-	:global(#rows .rank) { opacity: 0.4; }
-	:global(#rows .artist) {
-		display: flex;
-		align-items: center;
-		gap: 0.6rem;
-	}
-	:global(#rows .artist img),
-	:global(#rows .artist .ph) {
-		width: 30px;
-		height: 30px;
-		border-radius: 50%;
-		object-fit: cover;
-		flex-shrink: 0;
-		font-size: 0.85rem;
-	}
+	.ch tbody tr { cursor: pointer; }
+	.ch tbody tr:hover { background: var(--panel-hover); }
+	.ch td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+	.ch td.dim { opacity: 0.45; }
+	.ch .artist-cell { display: flex; align-items: center; gap: 0.6rem; }
+	.ch .artist-cell .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-	:global(.up) { color: #22c55e; }
-	:global(.down) { color: #ef4444; }
-	:global(.flat) { opacity: 0.35; }
-	:global(.entered) {
+	.ch .up { color: var(--up); }
+	.ch .down { color: var(--down); }
+	.ch .flat { opacity: 0.35; }
+	.ch .entered {
 		color: #eab308;
-		font-size: 0.75rem;
+		font-size: 0.72rem;
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
 	}
-	:global(.delta) {
-		display: block;
-		font-size: 0.7rem;
-		opacity: 0.45;
-	}
+	.ch .delta { display: block; font-size: 0.68rem; opacity: 0.45; }
 
-	.footnote {
-		margin-top: 2.5rem;
-		font-size: 0.75rem;
-		opacity: 0.4;
+	/* ---------- overlay / detail ---------- */
+	#overlay {
+		position: fixed;
+		inset: 0;
+		background: rgba(0, 0, 0, 0.5);
+		backdrop-filter: blur(6px);
+		z-index: 100;
+		display: flex;
+		align-items: flex-start;
+		justify-content: center;
+		padding: 4rem 1.5rem;
+		overflow-y: auto;
 	}
-	.footnote :global(a) { color: var(--text); }
+	.ch .detail {
+		width: 100%;
+		max-width: 720px;
+		background: var(--bg);
+		border: 1px solid var(--border);
+		border-radius: 16px;
+		padding: 1.75rem;
+		animation: ch-pop 0.18s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+	}
+	@keyframes ch-pop {
+		from { transform: translateY(14px) scale(0.98); opacity: 0; }
+	}
+	.ch .d-head { display: flex; gap: 1.25rem; align-items: center; margin-bottom: 1.25rem; }
+	.ch .d-img, .ch .d-head .ph.big {
+		width: 92px;
+		height: 92px;
+		border-radius: 12px;
+		object-fit: cover;
+		font-size: 2.4rem;
+	}
+	.ch .d-name {
+		font-family: 'Space Grotesk', sans-serif;
+		font-size: 1.7rem;
+		font-weight: 700;
+		letter-spacing: -0.01em;
+		margin: 0;
+	}
+	.ch .d-sub { opacity: 0.5; font-size: 0.85rem; margin-top: 0.2rem; }
+	.ch .d-links { margin-left: auto; display: flex; flex-direction: column; gap: 0.4rem; align-items: flex-end; }
+	.ch .d-close {
+		background: none;
+		border: 1px solid var(--border);
+		border-radius: 50%;
+		width: 34px;
+		height: 34px;
+		color: var(--text);
+		cursor: pointer;
+		font-size: 1rem;
+	}
+	.ch .d-close:hover { border-color: var(--text-muted); }
+	.ch .d-spotify {
+		font-size: 0.78rem;
+		color: var(--accent);
+		text-decoration: none;
+		border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+		border-radius: 999px;
+		padding: 0.3rem 0.8rem;
+	}
+	.ch .d-spotify:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+	.ch .d-stats {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+		gap: 0.6rem;
+		margin-bottom: 1.25rem;
+	}
+	.ch .d-stat {
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		padding: 0.7rem 0.9rem;
+	}
+	.ch .d-stat .kpi-value { font-size: 1.25rem; }
 
-	@media (max-width: 800px) {
-		.stats { grid-template-columns: 1fr 1fr; }
-		.stat-wide { grid-column: span 2; }
-		.movers { grid-template-columns: 1fr; }
-		.toolbar { flex-direction: column; }
-		.seg { align-self: flex-start; }
+	.ch .footnote { margin-top: 2.5rem; font-size: 0.75rem; opacity: 0.4; }
+	.ch .footnote a { color: var(--text); }
+
+	/* ---------- responsive ---------- */
+	@media (max-width: 860px) {
+		.ch { padding: 1rem 1rem 3rem; }
+		.ch .topbar { flex-wrap: wrap; gap: 0.6rem; }
+		.ch #search { width: 100%; margin-left: 0; }
+		.ch #search:focus { width: 100%; }
+		.ch .kpis { grid-template-columns: 1fr 1fr; }
+		.ch .kpis .kpi:first-child { grid-column: 1 / -1; }
+		.ch .grid { grid-template-columns: 1fr; }
+		.ch th { top: 0; }
 	}
 </style>
 
@@ -420,25 +554,25 @@ import Layout from '../layouts/Layout.astro';
 		if (!dash || dash.dataset.loaded) return;
 		dash.dataset.loaded = '1';
 
-		const status = document.getElementById('status');
-		const content = document.getElementById('content');
 		const $ = (id) => document.getElementById(id);
-
 		const esc = (s) =>
 			String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 		const fmt = (n) => {
+			if (n === null || n === undefined) return '—';
 			const a = Math.abs(n);
+			if (a >= 1e12) return (n / 1e12).toFixed(2) + 't';
 			if (a >= 1e9) return (n / 1e9).toFixed(2) + 'b';
 			if (a >= 1e6) return (n / 1e6).toFixed(1) + 'm';
 			if (a >= 1e3) return (n / 1e3).toFixed(0) + 'k';
 			return String(n);
 		};
 		const signed = (n) => (n > 0 ? '+' : '') + fmt(n);
+		const cls = (n) => (n > 0 ? 'up' : n < 0 ? 'down' : 'flat');
 
-		const avatar = (r, cls) =>
+		const avatar = (r, extra) =>
 			r.image
-				? `<img src="${esc(r.image)}" alt="" loading="lazy" class="${cls || ''}" />`
-				: `<span class="ph ${cls || ''}">${esc((r.name[0] || '?').toLowerCase())}</span>`;
+				? `<img src="${esc(r.image)}" alt="" loading="lazy" class="av ${extra || ''}" />`
+				: `<span class="ph ${extra || ''}">${esc((r.name[0] || '?').toLowerCase())}</span>`;
 
 		const rankMove = (mv) =>
 			mv.rank > 0
@@ -447,139 +581,392 @@ import Layout from '../layouts/Layout.astro';
 					? `<span class="down">▼${-mv.rank}</span>`
 					: '<span class="flat">=</span>';
 
-		const rankCell = (mv, fallbackDelta) => {
+		const moveCell = (mv, fallback) => {
 			if (mv === null) {
-				const sub = fallbackDelta !== undefined ? `<span class="delta">${signed(fallbackDelta)}</span>` : '';
-				return `<span class="flat">—</span>${sub}`;
+				return fallback !== undefined
+					? `<span class="flat">—</span><span class="delta">${signed(fallback)}</span>`
+					: '<span class="flat">—</span>';
 			}
 			if (mv.entered) return '<span class="entered">new</span>';
 			return `${rankMove(mv)}<span class="delta">${signed(mv.listeners)}</span>`;
 		};
 
-		const chip = (label, mv, fallbackDelta) => {
+		const chip = (label, mv, fallback) => {
 			let inner;
 			if (mv === null) {
 				inner =
-					fallbackDelta !== undefined
-						? `<span class="${fallbackDelta > 0 ? 'up' : fallbackDelta < 0 ? 'down' : 'flat'}">${signed(fallbackDelta)}</span>`
+					fallback !== undefined
+						? `<span class="${cls(fallback)}">${signed(fallback)}</span>`
 						: '<span class="flat">—</span>';
 			} else if (mv.entered) {
 				inner = '<span class="entered">new</span>';
 			} else {
-				inner = `${rankMove(mv)} <span title="listeners">${signed(mv.listeners)}</span>`;
+				inner = `${rankMove(mv)} ${signed(mv.listeners)}`;
 			}
 			return `<span class="chip"><span class="lbl">${label}</span>${inner}</span>`;
 		};
 
-		const totalCell = (id, v) => {
-			const el = $(id);
-			if (v === null || v === undefined) {
-				el.textContent = '—';
-				el.classList.add('flat');
-			} else {
-				el.textContent = signed(v);
-				el.classList.add(v > 0 ? 'up' : v < 0 ? 'down' : 'flat');
-			}
+		// ---------- tooltip ----------
+		const tip = $('tooltip');
+		const showTip = (x, y, html) => {
+			tip.innerHTML = html;
+			tip.classList.remove('hidden');
+			const w = tip.offsetWidth;
+			tip.style.left = Math.min(x + 14, window.innerWidth - w - 10) + 'px';
+			tip.style.top = y + 14 + 'px';
 		};
+		const hideTip = () => tip.classList.add('hidden');
 
-		let data;
+		// ---------- svg chart ----------
+		// labels[], values[] (nulls skipped); returns nothing, renders into el
+		function lineChart(el, labels, values, opts = {}) {
+			const W = 800, H = 240, PL = 46, PR = 10, PT = 12, PB = 24;
+			const pts = [];
+			for (let i = 0; i < values.length; i++) if (values[i] !== null) pts.push([i, values[i]]);
+			if (pts.length === 0) {
+				el.innerHTML = '<div class="chart-note">no data yet</div>';
+				return;
+			}
+			const ys = pts.map((p) => p[1]);
+			let min = Math.min(...ys), max = Math.max(...ys);
+			if (min === max) { min *= 0.995; max *= 1.005; }
+			const pad = (max - min) * 0.08;
+			min -= pad; max += pad;
+			const X = (i) => PL + ((W - PL - PR) * (values.length < 2 ? 0.5 : i / (values.length - 1)));
+			const Y = (v) => PT + (H - PT - PB) * (1 - (v - min) / (max - min));
+			const line = pts.map((p, j) => `${j ? 'L' : 'M'}${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join('');
+			const area = pts.length > 1 ? `${line}L${X(pts.at(-1)[0]).toFixed(1)},${H - PB}L${X(pts[0][0]).toFixed(1)},${H - PB}Z` : '';
+			const gid = 'g' + Math.random().toString(36).slice(2, 8);
+			const gridYs = [0.25, 0.5, 0.75].map((f) => PT + (H - PT - PB) * f);
+			el.innerHTML = `<svg viewBox="0 0 ${W} ${H}">
+				<defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+					<stop offset="0%" stop-color="${opts.color || '#1db954'}" stop-opacity="0.28"/>
+					<stop offset="100%" stop-color="${opts.color || '#1db954'}" stop-opacity="0"/>
+				</linearGradient></defs>
+				${gridYs.map((y) => `<line class="gridline" x1="${PL}" y1="${y}" x2="${W - PR}" y2="${y}"/>`).join('')}
+				${area ? `<path d="${area}" fill="url(#${gid})"/>` : ''}
+				<path d="${line}" fill="none" stroke="${opts.color || '#1db954'}" stroke-width="2.2" stroke-linejoin="round"/>
+				${pts.length < 15 ? pts.map((p) => `<circle cx="${X(p[0]).toFixed(1)}" cy="${Y(p[1]).toFixed(1)}" r="3.2" fill="${opts.color || '#1db954'}"/>`).join('') : ''}
+				<text class="axis" x="${PL - 6}" y="${Y(max - pad) + 4}" text-anchor="end">${(opts.fmtY || fmt)(max - pad)}</text>
+				<text class="axis" x="${PL - 6}" y="${Y(min + pad) + 4}" text-anchor="end">${(opts.fmtY || fmt)(min + pad)}</text>
+				<text class="axis" x="${PL}" y="${H - 8}">${esc(labels[pts[0][0]] ?? '')}</text>
+				<text class="axis" x="${W - PR}" y="${H - 8}" text-anchor="end">${esc(labels[pts.at(-1)[0]] ?? '')}</text>
+			</svg>`;
+			const svg = el.querySelector('svg');
+			svg.addEventListener('mousemove', (e) => {
+				const rect = svg.getBoundingClientRect();
+				const fx = ((e.clientX - rect.left) / rect.width) * W;
+				let best = pts[0], bd = Infinity;
+				for (const p of pts) {
+					const d = Math.abs(X(p[0]) - fx);
+					if (d < bd) { bd = d; best = p; }
+				}
+				showTip(e.clientX, e.clientY,
+					`<div class="t-title">${(opts.fmtY || fmt)(best[1])}</div><div class="t-sub">${esc((opts.fmtLabel || ((l) => l))(labels[best[0]], best[0]))}</div>`);
+			});
+			svg.addEventListener('mouseleave', hideTip);
+			if (opts.note && pts.length < 2) {
+				el.insertAdjacentHTML('beforeend', `<div class="chart-note">${esc(opts.note)}</div>`);
+			}
+		}
+
+		// ---------- load ----------
+		let data, series;
 		try {
-			const res = await fetch('/api/top500');
-			if (!res.ok) throw new Error('api returned ' + res.status);
-			data = await res.json();
+			const [dRes, hRes] = await Promise.all([fetch('/api/top500'), fetch('/api/history')]);
+			if (!dRes.ok) throw new Error('api returned ' + dRes.status);
+			data = await dRes.json();
 			if (data.error) throw new Error(data.error);
+			series = hRes.ok ? await hRes.json() : { dates: [], totals: [], artists: {} };
 		} catch (err) {
-			status.textContent = 'failed to load data: ' + err.message;
+			$('status').innerHTML = '<div class="chart-note">failed to load data: ' + esc(err.message) + '</div>';
 			return;
 		}
+		const rows = data.rows;
+		const byId = Object.fromEntries(rows.map((r) => [r.id, r]));
 
-		// stats
-		$('total-listeners').textContent = fmt(data.totals.listeners);
-		$('total-daily').textContent = signed(data.totals.dailyChange) + ' today';
-		totalCell('total-dod', data.totals.dod ?? data.totals.dailyChange);
-		totalCell('total-wow', data.totals.wow);
-		totalCell('total-mom', data.totals.mom);
-		for (const k of ['dod', 'wow', 'mom']) {
-			$('cmp-' + k).textContent = data.compared[k] ? 'vs ' + data.compared[k] : 'history accumulating';
-		}
+		// ---------- kpis ----------
+		const kpiDefs = [
+			{ label: 'world listeners (top 500)', value: data.totals.listeners, sub: signed(data.totals.dailyChange) + ' today', plain: true },
+			{ label: 'day on day', value: data.totals.dod ?? data.totals.dailyChange, sub: data.compared.dod ? 'vs ' + data.compared.dod : 'kworb daily change', signed: true },
+			{ label: 'week on week', value: data.totals.wow, sub: data.compared.wow ? 'vs ' + data.compared.wow : 'history accumulating', signed: true },
+			{ label: 'month on month', value: data.totals.mom, sub: data.compared.mom ? 'vs ' + data.compared.mom : 'history accumulating', signed: true },
+		];
+		$('kpis').innerHTML = kpiDefs
+			.map(
+				(k, i) => `<div class="kpi">
+				<span class="kpi-label">${k.label}</span>
+				<span class="kpi-value ${k.signed && k.value !== null ? cls(k.value) : ''}" data-kpi="${i}">—</span>
+				<span class="kpi-sub">${esc(k.sub)}</span>
+			</div>`
+			)
+			.join('');
+		// count-up
+		kpiDefs.forEach((k, i) => {
+			const el = document.querySelector(`[data-kpi="${i}"]`);
+			if (k.value === null || k.value === undefined) return;
+			const t0 = performance.now(), dur = 700;
+			const step = (t) => {
+				const p = Math.min(1, (t - t0) / dur);
+				const eased = 1 - Math.pow(1 - p, 3);
+				el.textContent = (k.signed ? signed : fmt)(Math.round(k.value * eased));
+				if (p < 1) requestAnimationFrame(step);
+			};
+			requestAnimationFrame(step);
+		});
 
-		// movers: rank movement when history exists, else daily listener change
-		const hasDod = data.rows.some((r) => r.dod && !r.dod.entered);
+		// ---------- trend chart with ranges ----------
+		const ranges = [
+			{ label: '7d', n: 7 },
+			{ label: '30d', n: 30 },
+			{ label: '90d', n: 90 },
+		];
+		let activeRange = 2;
+		const renderTrend = () => {
+			const n = ranges[activeRange].n;
+			const dates = series.dates.slice(-n);
+			const totals = series.totals.slice(-n).map((v) => (v === null ? null : v * 1000));
+			lineChart($('trend'), dates, totals, {
+				fmtY: fmt,
+				fmtLabel: (l) => l,
+				note: `day ${series.dates.length} of trend history — charts build as daily snapshots accumulate`,
+			});
+		};
+		$('ranges').innerHTML = ranges
+			.map((r, i) => `<button data-r="${i}" class="${i === activeRange ? 'active' : ''}">${r.label}</button>`)
+			.join('');
+		$('ranges').addEventListener('click', (e) => {
+			if (e.target.dataset.r === undefined) return;
+			activeRange = +e.target.dataset.r;
+			for (const b of $('ranges').children) b.classList.toggle('active', b.dataset.r == activeRange);
+			renderTrend();
+		});
+		renderTrend();
+
+		// ---------- top 10 ----------
+		const top10 = rows.slice(0, 10);
+		const maxL = top10[0]?.listeners || 1;
+		$('top10').innerHTML = top10
+			.map(
+				(r) => `<div class="bar-row" data-id="${r.id}">
+				<span class="bar-rank">${r.rank}</span>${avatar(r)}
+				<span class="bar-name">${esc(r.name)}</span>
+				<span class="bar-track"><span class="bar-fill" style="width:0%" data-w="${((r.listeners / maxL) * 100).toFixed(1)}"></span></span>
+				<span class="bar-val">${fmt(r.listeners)}</span>
+			</div>`
+			)
+			.join('');
+		requestAnimationFrame(() =>
+			document.querySelectorAll('.bar-fill').forEach((b) => (b.style.width = b.dataset.w + '%'))
+		);
+
+		// ---------- decay curve ----------
+		lineChart($('decay'), rows.map((r) => '#' + r.rank + ' ' + r.name), rows.map((r) => r.listeners), {
+			fmtY: fmt,
+			fmtLabel: (l) => l,
+		});
+
+		// ---------- movers ----------
+		const hasDod = rows.some((r) => r.dod && !r.dod.entered);
 		const metric = hasDod ? (r) => (r.dod && !r.dod.entered ? r.dod.rank : 0) : (r) => r.dailyChange || 0;
 		const moverVal = hasDod
 			? (r) => `${metric(r) > 0 ? '▲' : '▼'}${Math.abs(metric(r))}`
 			: (r) => signed(metric(r));
-		const moverRow = (r, cls) =>
-			`<div class="mover">${avatar(r)}<span class="mrank">#${r.rank}</span><span class="mname">${esc(r.name)}</span><span class="mval ${cls}">${moverVal(r)}</span></div>`;
-		const sorted = [...data.rows].sort((a, b) => metric(b) - metric(a));
-		$('climbers').innerHTML = sorted.slice(0, 5).filter((r) => metric(r) > 0).map((r) => moverRow(r, 'up')).join('') || '<div class="mover flat">none</div>';
-		$('fallers').innerHTML = sorted.slice(-5).reverse().filter((r) => metric(r) < 0).map((r) => moverRow(r, 'down')).join('') || '<div class="mover flat">none</div>';
+		const moverRow = (r, c) =>
+			`<div class="mover" data-id="${r.id}">${avatar(r)}<span class="mrank">#${r.rank}</span><span class="mname">${esc(r.name)}</span><span class="mval ${c}">${moverVal(r)}</span></div>`;
+		const sorted = [...rows].sort((a, b) => metric(b) - metric(a));
+		$('climbers').innerHTML =
+			sorted.slice(0, 6).filter((r) => metric(r) > 0).map((r) => moverRow(r, 'up')).join('') ||
+			'<div class="chart-note">none today</div>';
+		$('fallers').innerHTML =
+			sorted.slice(-6).reverse().filter((r) => metric(r) < 0).map((r) => moverRow(r, 'down')).join('') ||
+			'<div class="chart-note">none today</div>';
 		const unit = hasDod ? 'by rank, dod' : 'by listeners, today';
 		$('climbers-title').textContent = 'top climbers · ' + unit;
 		$('fallers-title').textContent = 'top fallers · ' + unit;
 
-		// cards
-		$('cards').innerHTML = data.rows
+		// ---------- cards ----------
+		$('cards').innerHTML = rows
 			.map(
-				(r) => `<div class="card" data-name="${esc(r.name.toLowerCase())}">
-				<div class="thumb">${avatar(r)}<span class="rank-badge">#${r.rank}</span></div>
-				<div class="card-name" title="${esc(r.name)} · peak #${r.peak ?? '?'}">${esc(r.name)}</div>
-				<div class="card-listeners" title="${r.listeners.toLocaleString()}">${fmt(r.listeners)}</div>
+				(r) => `<div class="card" data-id="${r.id}" data-name="${esc(r.name.toLowerCase())}">
+				<div class="thumb">${r.image ? `<img src="${esc(r.image)}" alt="" loading="lazy"/>` : `<span class="ph">${esc((r.name[0] || '?').toLowerCase())}</span>`}<span class="rank-badge">#${r.rank}</span></div>
+				<div class="card-name">${esc(r.name)}</div>
+				<div class="card-listeners">${fmt(r.listeners)}</div>
 				<div class="chips">${chip('d', r.dod, r.dailyChange)}${chip('w', r.wow)}${chip('m', r.mom)}</div>
 			</div>`
 			)
 			.join('');
 
-		// table
-		$('rows').innerHTML = data.rows
-			.map(
-				(r) => `<tr data-name="${esc(r.name.toLowerCase())}">
-				<td class="num rank">${r.rank}</td>
-				<td><span class="artist">${avatar(r)}<span title="peak: #${r.peak ?? '?'}">${esc(r.name)}</span></span></td>
-				<td class="num" title="${r.listeners.toLocaleString()}">${fmt(r.listeners)}</td>
-				<td class="num">${rankCell(r.dod, r.dailyChange)}</td>
-				<td class="num">${rankCell(r.wow)}</td>
-				<td class="num">${rankCell(r.mom)}</td>
-			</tr>`
-			)
-			.join('');
-
-		// view toggle
-		const seg = $('viewseg');
-		const setView = (view) => {
-			$('cards').classList.toggle('hidden', view !== 'cards');
-			$('tablewrap').classList.toggle('hidden', view !== 'table');
-			for (const b of seg.querySelectorAll('button')) {
-				b.classList.toggle('active', b.dataset.view === view);
-			}
-			try {
-				localStorage.setItem('charles-view', view);
-			} catch {}
+		// ---------- table ----------
+		const cols = [
+			{ key: 'rank', label: '#', num: true },
+			{ key: 'name', label: 'artist' },
+			{ key: 'listeners', label: 'monthly listeners', num: true },
+			{ key: 'dailyChange', label: 'today', num: true },
+			{ key: 'dod', label: 'dod', num: true, mv: true },
+			{ key: 'wow', label: 'wow', num: true, mv: true },
+			{ key: 'mom', label: 'mom', num: true, mv: true },
+			{ key: 'streams', label: 'total streams', num: true },
+			{ key: 'dailyStreams', label: 'streams/day', num: true },
+			{ key: 'peak', label: 'peak', num: true },
+		];
+		let sortKey = 'rank', sortDir = 1;
+		const sortVal = (r, key) => {
+			const v = r[key];
+			if (v && typeof v === 'object') return v.entered ? -Infinity : v.rank;
+			if (typeof v === 'string') return v.toLowerCase();
+			return v === null || v === undefined ? -Infinity : v;
 		};
-		seg.addEventListener('click', (e) => {
-			if (e.target.dataset.view) setView(e.target.dataset.view);
+		const renderHead = () => {
+			$('thead').innerHTML = `<tr>${cols
+				.map(
+					(c) =>
+						`<th class="${c.num ? 'num' : ''}" data-key="${c.key}">${c.label}${sortKey === c.key ? ` <span class="arr">${sortDir === 1 ? '↑' : '↓'}</span>` : ''}</th>`
+				)
+				.join('')}</tr>`;
+		};
+		const renderBody = () => {
+			const list = [...rows].sort((a, b) => {
+				const va = sortVal(a, sortKey), vb = sortVal(b, sortKey);
+				return (va < vb ? -1 : va > vb ? 1 : 0) * sortDir;
+			});
+			$('rows').innerHTML = list
+				.map(
+					(r) => `<tr data-id="${r.id}" data-name="${esc(r.name.toLowerCase())}">
+					<td class="num dim">${r.rank}</td>
+					<td><span class="artist-cell">${avatar(r)}<span class="nm">${esc(r.name)}</span></span></td>
+					<td class="num" title="${r.listeners.toLocaleString()}">${fmt(r.listeners)}</td>
+					<td class="num ${cls(r.dailyChange)}">${signed(r.dailyChange)}</td>
+					<td class="num">${moveCell(r.dod)}</td>
+					<td class="num">${moveCell(r.wow)}</td>
+					<td class="num">${moveCell(r.mom)}</td>
+					<td class="num dim">${fmt(r.streams)}</td>
+					<td class="num dim">${fmt(r.dailyStreams)}</td>
+					<td class="num dim">#${r.peak ?? '—'}</td>
+				</tr>`
+				)
+				.join('');
+			applySearch();
+		};
+		renderHead();
+		renderBody();
+		$('thead').addEventListener('click', (e) => {
+			const th = e.target.closest('th');
+			if (!th) return;
+			const key = th.dataset.key;
+			if (sortKey === key) sortDir *= -1;
+			else { sortKey = key; sortDir = key === 'name' || key === 'rank' ? 1 : -1; }
+			renderHead();
+			renderBody();
 		});
-		let saved = 'cards';
-		try {
-			saved = localStorage.getItem('charles-view') || 'cards';
-		} catch {}
-		setView(saved === 'table' ? 'table' : 'cards');
 
-		// search filters both views
-		$('search').addEventListener('input', (e) => {
-			const q = e.target.value.trim().toLowerCase();
+		// ---------- detail overlay ----------
+		let lastView = 'overview';
+		const openDetail = (id) => {
+			const r = byId[id];
+			if (!r) return;
+			const hist = series.artists[id];
+			$('detail').innerHTML = `
+				<div class="d-head">
+					${r.image ? `<img class="d-img" src="${esc(r.image)}" alt=""/>` : `<span class="ph big">${esc((r.name[0] || '?').toLowerCase())}</span>`}
+					<div>
+						<h3 class="d-name">${esc(r.name)}</h3>
+						<div class="d-sub">#${r.rank} worldwide · peak #${r.peak ?? '—'}${r.peakListeners ? ' at ' + fmt(r.peakListeners) : ''}</div>
+					</div>
+					<div class="d-links">
+						<button class="d-close" id="d-close" aria-label="close">✕</button>
+						<a class="d-spotify" href="https://open.spotify.com/artist/${esc(r.id)}" target="_blank" rel="noopener">open in spotify ↗</a>
+					</div>
+				</div>
+				<div class="d-stats">
+					<div class="d-stat"><span class="kpi-label">monthly listeners</span><span class="kpi-value">${fmt(r.listeners)}</span></div>
+					<div class="d-stat"><span class="kpi-label">today</span><span class="kpi-value ${cls(r.dailyChange)}">${signed(r.dailyChange)}</span></div>
+					<div class="d-stat"><span class="kpi-label">total streams</span><span class="kpi-value">${fmt(r.streams)}</span></div>
+					<div class="d-stat"><span class="kpi-label">streams / day</span><span class="kpi-value">${fmt(r.dailyStreams)}</span></div>
+					${r.followers ? `<div class="d-stat"><span class="kpi-label">followers</span><span class="kpi-value">${fmt(r.followers)}</span></div>` : ''}
+					${r.popularity ? `<div class="d-stat"><span class="kpi-label">popularity</span><span class="kpi-value">${r.popularity}/100</span></div>` : ''}
+				</div>
+				<div class="chips" style="margin-bottom:1.25rem">${chip('dod', r.dod, r.dailyChange)}${chip('wow', r.wow)}${chip('mom', r.mom)}</div>
+				<div class="panel-head"><h2>monthly listeners trend</h2></div>
+				<div id="d-chart" class="chartbox"></div>`;
+			$('overlay').classList.remove('hidden');
+			document.body.style.overflow = 'hidden';
+			lineChart(
+				$('d-chart'),
+				series.dates,
+				hist ? hist.l.map((v) => (v === null ? null : v * 1000)) : [],
+				{ fmtY: fmt, note: 'per-artist trends build as daily snapshots accumulate' }
+			);
+			$('d-close').addEventListener('click', () => history.length > 1 ? history.back() : (location.hash = '#/' + lastView));
+		};
+		const closeDetail = () => {
+			$('overlay').classList.add('hidden');
+			document.body.style.overflow = '';
+		};
+		$('overlay').addEventListener('click', (e) => {
+			if (e.target === $('overlay')) history.length > 1 ? history.back() : (location.hash = '#/' + lastView);
+		});
+		document.addEventListener('click', (e) => {
+			const t = e.target.closest('[data-id]');
+			if (t && t.dataset.id && !e.target.closest('a')) location.hash = '#/artist/' + t.dataset.id;
+		});
+
+		// ---------- routing ----------
+		const views = ['overview', 'artists', 'table'];
+		const setView = (v) => {
+			lastView = v;
+			for (const name of views) $('view-' + name).classList.toggle('hidden', name !== v);
+			for (const a of $('tabs').children) a.classList.toggle('active', a.dataset.route === v);
+			try { localStorage.setItem('charles-view', v); } catch {}
+		};
+		const route = () => {
+			const h = location.hash.replace(/^#\/?/, '');
+			if (h.startsWith('artist/')) { openDetail(h.slice(7)); return; }
+			closeDetail();
+			setView(views.includes(h) ? h : 'overview');
+		};
+		window.addEventListener('hashchange', route);
+		if (!location.hash) {
+			let saved = 'overview';
+			try { saved = localStorage.getItem('charles-view') || 'overview'; } catch {}
+			if (views.includes(saved) && saved !== 'overview') location.hash = '#/' + saved;
+		}
+
+		// ---------- search ----------
+		const applySearch = () => {
+			const q = $('search').value.trim().toLowerCase();
 			for (const el of [...$('cards').children, ...$('rows').children]) {
 				el.style.display = !q || el.dataset.name.includes(q) ? '' : 'none';
 			}
+		};
+		$('search').addEventListener('input', () => {
+			const cur = location.hash.replace(/^#\/?/, '');
+			if ($('search').value && (cur === 'overview' || cur === '')) location.hash = '#/artists';
+			applySearch();
+		});
+		document.addEventListener('keydown', (e) => {
+			if (e.key === '/' && document.activeElement !== $('search')) {
+				e.preventDefault();
+				$('search').focus();
+			}
+			if (e.key === 'Escape') {
+				if (!$('overlay').classList.contains('hidden')) {
+					history.length > 1 ? history.back() : (location.hash = '#/' + lastView);
+				} else if (document.activeElement === $('search')) {
+					$('search').value = '';
+					applySearch();
+					$('search').blur();
+				}
+			}
 		});
 
-		const compared = ['dod', 'wow', 'mom']
-			.map((k) => `${k} vs ${data.compared[k] ?? 'n/a'}`)
-			.join(' · ');
+		// ---------- footnote & reveal ----------
 		$('footnote').innerHTML =
-			`data: <a href="https://kworb.net/spotify/listeners.html">kworb.net</a> + spotify api · updated ${esc(data.generatedAt.slice(0, 16).replace('T', ' '))} utc · ${esc(compared)}`;
+			`data: <a href="https://kworb.net/spotify/listeners.html">kworb.net</a> (listeners, streams) + spotify api (metadata) · updated ${esc(data.generatedAt.slice(0, 16).replace('T', ' '))} utc · ` +
+			['dod', 'wow', 'mom'].map((k) => `${k} vs ${data.compared[k] ?? 'n/a'}`).join(' · ') +
+			` · ${series.dates.length} day${series.dates.length === 1 ? '' : 's'} of trend history`;
 
-		status.classList.add('hidden');
-		content.classList.remove('hidden');
+		$('status').classList.add('hidden');
+		route();
 	});
 </script>

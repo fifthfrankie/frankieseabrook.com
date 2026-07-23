@@ -4,8 +4,10 @@ import { getStore } from '@netlify/blobs';
 export const blobStore = () => getStore({ name: 'top500', consistency: 'strong' });
 
 const KWORB_URL = 'https://kworb.net/spotify/listeners.html';
+const KWORB_STREAMS_URL = 'https://kworb.net/spotify/artists.html';
 const TOP_N = 500;
 const RETENTION_DAYS = 400;
+const SERIES_DAYS = 90;
 
 const num = (s) => {
 	const n = parseInt(String(s).replace(/[,+]/g, ''), 10);
@@ -37,9 +39,28 @@ export function parseKworb(html) {
 			listeners,
 			dailyChange: num(m[5]) ?? 0,
 			peak: num(m[6]),
+			peakListeners: num(m[7]),
 		});
 	}
 	return rows;
+}
+
+// kworb artists.html: total/daily streams per artist, values in millions
+export function parseKworbStreams(html) {
+	const re =
+		/<td class="text"><div><a href="[^"]*artist\/([^_]+)_songs\.html">[^<]*<\/a><\/div><\/td>\s*<td>([^<]*)<\/td>\s*<td>([^<]*)<\/td>/g;
+	const byId = {};
+	let m;
+	while ((m = re.exec(html))) {
+		const streams = parseFloat(m[2].replace(/,/g, ''));
+		const daily = parseFloat(m[3].replace(/,/g, ''));
+		if (!Number.isFinite(streams)) continue;
+		byId[m[1]] = {
+			streams: Math.round(streams * 1e6),
+			dailyStreams: Number.isFinite(daily) ? Math.round(daily * 1e6) : null,
+		};
+	}
+	return byId;
 }
 
 async function spotifyToken() {
@@ -116,6 +137,43 @@ async function resolveImages(store, ids, meta) {
 
 const dateKey = (d) => d.toISOString().slice(0, 10);
 
+// rolling per-artist history: dates[] aligned with totals[] and each
+// artists[id].{r,l}; listeners stored in thousands to keep the blob small
+async function updateSeries(store, today, artists, total) {
+	const s = (await store.get('series', { type: 'json' })) ?? { dates: [], totals: [], artists: {} };
+	if (s.dates.at(-1) !== today) {
+		s.dates.push(today);
+		s.totals.push(null);
+		for (const e of Object.values(s.artists)) {
+			e.r.push(null);
+			e.l.push(null);
+		}
+	}
+	const at = s.dates.length - 1;
+	s.totals[at] = Math.round(total / 1000);
+	for (const a of artists) {
+		if (!s.artists[a.id]) {
+			s.artists[a.id] = { r: Array(s.dates.length).fill(null), l: Array(s.dates.length).fill(null) };
+		}
+		const e = s.artists[a.id];
+		e.r[at] = a.rank;
+		e.l[at] = Math.round(a.listeners / 1000);
+	}
+	const cut = s.dates.length - SERIES_DAYS;
+	if (cut > 0) {
+		s.dates.splice(0, cut);
+		s.totals.splice(0, cut);
+		for (const e of Object.values(s.artists)) {
+			e.r.splice(0, cut);
+			e.l.splice(0, cut);
+		}
+	}
+	for (const [id, e] of Object.entries(s.artists)) {
+		if (!e.l.some((v) => v !== null)) delete s.artists[id];
+	}
+	await store.setJSON('series', s);
+}
+
 function nearest(keys, target, tolDays) {
 	let best = null;
 	let bestDiff = Infinity;
@@ -130,11 +188,14 @@ function nearest(keys, target, tolDays) {
 }
 
 export async function refresh() {
-	const res = await fetch(KWORB_URL, {
-		headers: { 'user-agent': 'Mozilla/5.0 (frankieseabrook.com charles dashboard)' },
-	});
+	const ua = { headers: { 'user-agent': 'Mozilla/5.0 (frankieseabrook.com charles dashboard)' } };
+	const [res, streamsRes] = await Promise.all([
+		fetch(KWORB_URL, ua),
+		fetch(KWORB_STREAMS_URL, ua).catch(() => null),
+	]);
 	if (!res.ok) throw new Error(`kworb fetch failed: ${res.status}`);
 	const artists = parseKworb(await res.text()).slice(0, TOP_N);
+	const streamsById = streamsRes?.ok ? parseKworbStreams(await streamsRes.text()) : {};
 	if (artists.length < 400) throw new Error(`kworb parse returned only ${artists.length} rows`);
 
 	const store = blobStore();
@@ -172,6 +233,7 @@ export async function refresh() {
 		const m = meta[a.id];
 		const row = {
 			...a,
+			...(streamsById[a.id] ?? { streams: null, dailyStreams: null }),
 			image: m?.image ?? images[a.id]?.url ?? null,
 			followers: m?.followers ?? null,
 			popularity: m?.popularity ?? null,
@@ -197,6 +259,8 @@ export async function refresh() {
 			? total - Object.values(prev[label].byId).reduce((s, p) => s + p.listeners, 0)
 			: null;
 	}
+
+	await updateSeries(store, today, artists, total);
 
 	for (const k of keys) {
 		if ((Date.now() - Date.parse(k)) / 86400e3 > RETENTION_DAYS) await store.delete(`snap/${k}`);
