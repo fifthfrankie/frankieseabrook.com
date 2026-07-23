@@ -943,6 +943,15 @@ import Layout from '../layouts/Layout.astro';
 			setView(views.includes(h) ? h : 'overview');
 		};
 		window.addEventListener('hashchange', route);
+		// Astro's ClientRouter intercepts <a> clicks (pushState, no hashchange);
+		// claim tab clicks first and drive the hash ourselves
+		$('tabs').addEventListener('click', (e) => {
+			const a = e.target.closest('a');
+			if (!a) return;
+			e.preventDefault();
+			e.stopPropagation();
+			location.hash = a.getAttribute('href');
+		});
 		if (!location.hash) {
 			let saved = 'overview';
 			try { saved = localStorage.getItem('charles-view') || 'overview'; } catch {}
