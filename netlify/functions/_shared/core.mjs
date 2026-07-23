@@ -78,6 +78,36 @@ async function fetchArtistMeta(ids) {
 	return { meta, status };
 }
 
+// oEmbed is one request per artist, so resolve missing images incrementally
+// per refresh to stay inside the sync-function time budget; the cache is
+// persistent, so coverage reaches 100% after a few refreshes.
+const OEMBED_BATCH = 120;
+const OEMBED_CONCURRENCY = 12;
+
+async function resolveImages(store, ids, meta) {
+	const cache = (await store.get('images', { type: 'json' })) ?? {};
+	for (const [id, m] of Object.entries(meta)) {
+		if (m.image) cache[id] = { url: m.image, src: 'api', at: Date.now() };
+	}
+	const missing = ids.filter((id) => !cache[id]?.url).slice(0, OEMBED_BATCH);
+	for (let i = 0; i < missing.length; i += OEMBED_CONCURRENCY) {
+		await Promise.all(
+			missing.slice(i, i + OEMBED_CONCURRENCY).map(async (id) => {
+				try {
+					const res = await fetch(
+						`https://open.spotify.com/oembed?url=https://open.spotify.com/artist/${id}`
+					);
+					if (!res.ok) return;
+					const url = (await res.json()).thumbnail_url;
+					if (url) cache[id] = { url, src: 'oembed', at: Date.now() };
+				} catch {}
+			})
+		);
+	}
+	await store.setJSON('images', cache);
+	return cache;
+}
+
 const dateKey = (d) => d.toISOString().slice(0, 10);
 
 function nearest(keys, target, tolDays) {
@@ -130,9 +160,16 @@ export async function refresh() {
 	}
 
 	const { meta, status: spotifyStatus } = await fetchArtistMeta(artists.map((a) => a.id));
+	const images = await resolveImages(store, artists.map((a) => a.id), meta);
 
 	const rows = artists.map((a) => {
-		const row = { ...a, ...(meta[a.id] ?? { image: null, followers: null, popularity: null }) };
+		const m = meta[a.id];
+		const row = {
+			...a,
+			image: m?.image ?? images[a.id]?.url ?? null,
+			followers: m?.followers ?? null,
+			popularity: m?.popularity ?? null,
+		};
 		for (const label of Object.keys(windows)) {
 			const p = prev[label]?.byId[a.id];
 			row[label] = prev[label]
