@@ -101,7 +101,8 @@ import Layout from '../layouts/Layout.astro';
 		opacity: 0.6;
 	}
 	.back:hover { opacity: 1; }
-	.hidden { display: none; }
+	/* !important so it beats ID-selector display rules (e.g. #cards) */
+	.hidden { display: none !important; }
 
 	header { margin: 2rem 0; }
 	h1 {
