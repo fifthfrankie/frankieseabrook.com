@@ -3,6 +3,13 @@ import Layout from '../layouts/Layout.astro';
 ---
 
 <Layout>
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link
+		rel="stylesheet"
+		href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap"
+	/>
+
 	<main>
 		<a href="/" class="back">< back</a>
 
@@ -22,34 +29,58 @@ import Layout from '../layouts/Layout.astro';
 						<span class="stat-sub" id="total-daily"></span>
 					</div>
 					<div class="stat">
-						<span class="stat-label">dod</span>
+						<span class="stat-label">day on day</span>
 						<span class="stat-value" id="total-dod"></span>
+						<span class="stat-sub" id="cmp-dod"></span>
 					</div>
 					<div class="stat">
-						<span class="stat-label">wow</span>
+						<span class="stat-label">week on week</span>
 						<span class="stat-value" id="total-wow"></span>
+						<span class="stat-sub" id="cmp-wow"></span>
 					</div>
 					<div class="stat">
-						<span class="stat-label">mom</span>
+						<span class="stat-label">month on month</span>
 						<span class="stat-value" id="total-mom"></span>
+						<span class="stat-sub" id="cmp-mom"></span>
 					</div>
 				</div>
 
-				<input type="search" id="search" placeholder="filter artists…" autocomplete="off" />
+				<div class="movers">
+					<div class="panel">
+						<h2 id="climbers-title">climbers</h2>
+						<div id="climbers"></div>
+					</div>
+					<div class="panel">
+						<h2 id="fallers-title">fallers</h2>
+						<div id="fallers"></div>
+					</div>
+				</div>
 
-				<table>
-					<thead>
-						<tr>
-							<th class="num">#</th>
-							<th>artist</th>
-							<th class="num">monthly listeners</th>
-							<th class="num">dod</th>
-							<th class="num">wow</th>
-							<th class="num">mom</th>
-						</tr>
-					</thead>
-					<tbody id="rows"></tbody>
-				</table>
+				<div class="toolbar">
+					<div class="seg" id="viewseg">
+						<button type="button" data-view="cards">cards</button>
+						<button type="button" data-view="table">table</button>
+					</div>
+					<input type="search" id="search" placeholder="filter artists…" autocomplete="off" />
+				</div>
+
+				<div id="cards"></div>
+
+				<div id="tablewrap" class="hidden">
+					<table>
+						<thead>
+							<tr>
+								<th class="num">#</th>
+								<th>artist</th>
+								<th class="num">monthly listeners</th>
+								<th class="num">dod</th>
+								<th class="num">wow</th>
+								<th class="num">mom</th>
+							</tr>
+						</thead>
+						<tbody id="rows"></tbody>
+					</table>
+				</div>
 
 				<p class="footnote" id="footnote"></p>
 			</div>
@@ -59,9 +90,10 @@ import Layout from '../layouts/Layout.astro';
 
 <style>
 	main {
-		max-width: 960px;
+		max-width: 1100px;
 		margin: 0 auto;
 		padding: 4rem 2rem;
+		font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 	}
 	.back {
 		color: var(--text);
@@ -73,12 +105,16 @@ import Layout from '../layouts/Layout.astro';
 
 	header { margin: 2rem 0; }
 	h1 {
-		font-size: 2.5rem;
+		font-family: 'Space Grotesk', sans-serif;
+		font-size: 2.75rem;
+		font-weight: 700;
+		letter-spacing: -0.02em;
 		margin: 0;
 	}
 	.subtitle {
 		opacity: 0.5;
-		margin: 0.25rem 0 0;
+		margin: 0.35rem 0 0;
+		font-size: 0.95rem;
 	}
 
 	#status {
@@ -91,51 +127,217 @@ import Layout from '../layouts/Layout.astro';
 		display: grid;
 		grid-template-columns: 2fr 1fr 1fr 1fr;
 		gap: 0.75rem;
-		margin-bottom: 2rem;
+		margin-bottom: 0.75rem;
 	}
 	.stat {
 		border: 1px solid var(--border);
-		border-radius: 6px;
-		padding: 1rem 1.25rem;
+		border-radius: 10px;
+		padding: 1.1rem 1.3rem;
 		display: flex;
 		flex-direction: column;
-		gap: 0.25rem;
+		gap: 0.3rem;
+		background: color-mix(in srgb, var(--text) 3%, transparent);
 	}
 	.stat-label {
-		font-size: 0.7rem;
+		font-size: 0.68rem;
 		text-transform: uppercase;
-		letter-spacing: 0.1em;
+		letter-spacing: 0.12em;
 		opacity: 0.4;
 	}
 	.stat-value {
-		font-size: 1.5rem;
+		font-family: 'Space Grotesk', sans-serif;
+		font-size: 1.8rem;
 		font-weight: 600;
 		font-variant-numeric: tabular-nums;
+		letter-spacing: -0.01em;
 	}
 	.stat-sub {
-		font-size: 0.8rem;
+		font-size: 0.75rem;
 		opacity: 0.5;
 		font-variant-numeric: tabular-nums;
 	}
-	@media (max-width: 700px) {
-		.stats { grid-template-columns: 1fr 1fr; }
-		.stat-wide { grid-column: span 2; }
+
+	/* movers */
+	.movers {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 0.75rem;
+		margin-bottom: 2rem;
+	}
+	.panel {
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		padding: 1rem 1.3rem;
+		background: color-mix(in srgb, var(--text) 3%, transparent);
+	}
+	.panel h2 {
+		font-size: 0.68rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.12em;
+		opacity: 0.4;
+		margin: 0 0 0.75rem;
+	}
+	:global(.mover) {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		padding: 0.3rem 0;
+		font-size: 0.85rem;
+	}
+	:global(.mover img),
+	:global(.mover .ph) {
+		width: 26px;
+		height: 26px;
+		border-radius: 50%;
+		object-fit: cover;
+		flex-shrink: 0;
+	}
+	:global(.mover .mrank) {
+		opacity: 0.35;
+		font-variant-numeric: tabular-nums;
+		width: 2.2em;
+		flex-shrink: 0;
+	}
+	:global(.mover .mname) {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	:global(.mover .mval) {
+		margin-left: auto;
+		font-variant-numeric: tabular-nums;
+		font-weight: 500;
+		white-space: nowrap;
 	}
 
-	/* search */
+	/* toolbar */
+	.toolbar {
+		display: flex;
+		gap: 0.75rem;
+		margin-bottom: 1.25rem;
+	}
+	.seg {
+		display: flex;
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		overflow: hidden;
+		flex-shrink: 0;
+	}
+	.seg button {
+		font-family: inherit;
+		font-size: 0.85rem;
+		background: none;
+		border: none;
+		color: var(--text);
+		opacity: 0.5;
+		padding: 0.55rem 1.1rem;
+		cursor: pointer;
+	}
+	.seg button:hover { opacity: 0.8; }
+	:global(.seg button.active) {
+		opacity: 1;
+		background: color-mix(in srgb, var(--text) 8%, transparent);
+	}
 	#search {
-		width: 100%;
+		flex: 1;
 		box-sizing: border-box;
 		background: none;
 		border: 1px solid var(--border);
-		border-radius: 6px;
+		border-radius: 8px;
 		color: var(--text);
-		padding: 0.6rem 0.9rem;
+		padding: 0.55rem 0.9rem;
+		font-family: inherit;
 		font-size: 0.9rem;
-		margin-bottom: 1rem;
 		outline: none;
 	}
 	#search:focus { border-color: var(--text-muted); }
+
+	/* cards */
+	#cards {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+		gap: 0.75rem;
+	}
+	:global(.card) {
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		padding: 0.6rem;
+		background: color-mix(in srgb, var(--text) 3%, transparent);
+		transition: transform 0.12s, border-color 0.12s;
+	}
+	:global(.card:hover) {
+		transform: translateY(-2px);
+		border-color: var(--text-muted);
+	}
+	:global(.thumb) {
+		position: relative;
+		aspect-ratio: 1;
+		border-radius: 7px;
+		overflow: hidden;
+		background: var(--border);
+		margin-bottom: 0.6rem;
+	}
+	:global(.thumb img) {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		display: block;
+	}
+	:global(.ph) {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 100%;
+		height: 100%;
+		font-family: 'Space Grotesk', sans-serif;
+		font-size: 2.5rem;
+		font-weight: 700;
+		opacity: 0.25;
+		background: var(--border);
+	}
+	:global(.rank-badge) {
+		position: absolute;
+		top: 6px;
+		left: 6px;
+		font-family: 'Space Grotesk', sans-serif;
+		font-size: 0.72rem;
+		font-weight: 600;
+		font-variant-numeric: tabular-nums;
+		background: rgba(0, 0, 0, 0.55);
+		color: #fff;
+		border-radius: 999px;
+		padding: 0.15rem 0.5rem;
+		backdrop-filter: blur(4px);
+	}
+	:global(.card-name) {
+		font-size: 0.85rem;
+		font-weight: 500;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	:global(.card-listeners) {
+		font-family: 'Space Grotesk', sans-serif;
+		font-size: 1.15rem;
+		font-weight: 600;
+		font-variant-numeric: tabular-nums;
+		margin: 0.1rem 0 0.5rem;
+	}
+	:global(.chips) {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.3rem;
+	}
+	:global(.chip) {
+		font-size: 0.66rem;
+		font-variant-numeric: tabular-nums;
+		border-radius: 999px;
+		padding: 0.15rem 0.5rem;
+		background: color-mix(in srgb, var(--text) 7%, transparent);
+		white-space: nowrap;
+	}
+	:global(.chip .lbl) { opacity: 0.5; margin-right: 0.25em; }
 
 	/* table */
 	table {
@@ -145,9 +347,9 @@ import Layout from '../layouts/Layout.astro';
 	}
 	th {
 		text-align: left;
-		font-size: 0.7rem;
+		font-size: 0.68rem;
 		text-transform: uppercase;
-		letter-spacing: 0.1em;
+		letter-spacing: 0.12em;
 		opacity: 0.4;
 		font-weight: 600;
 		padding: 0.5rem 0.75rem;
@@ -170,20 +372,16 @@ import Layout from '../layouts/Layout.astro';
 		align-items: center;
 		gap: 0.6rem;
 	}
-	:global(#rows .artist img) {
-		width: 28px;
-		height: 28px;
+	:global(#rows .artist img),
+	:global(#rows .artist .ph) {
+		width: 30px;
+		height: 30px;
 		border-radius: 50%;
 		object-fit: cover;
-		background: var(--border);
-	}
-	:global(#rows .noimg) {
-		width: 28px;
-		height: 28px;
-		border-radius: 50%;
-		background: var(--border);
 		flex-shrink: 0;
+		font-size: 0.85rem;
 	}
+
 	:global(.up) { color: #22c55e; }
 	:global(.down) { color: #ef4444; }
 	:global(.flat) { opacity: 0.35; }
@@ -200,11 +398,19 @@ import Layout from '../layouts/Layout.astro';
 	}
 
 	.footnote {
-		margin-top: 2rem;
+		margin-top: 2.5rem;
 		font-size: 0.75rem;
 		opacity: 0.4;
 	}
 	.footnote :global(a) { color: var(--text); }
+
+	@media (max-width: 800px) {
+		.stats { grid-template-columns: 1fr 1fr; }
+		.stat-wide { grid-column: span 2; }
+		.movers { grid-template-columns: 1fr; }
+		.toolbar { flex-direction: column; }
+		.seg { align-self: flex-start; }
+	}
 </style>
 
 <script is:inline>
@@ -215,6 +421,7 @@ import Layout from '../layouts/Layout.astro';
 
 		const status = document.getElementById('status');
 		const content = document.getElementById('content');
+		const $ = (id) => document.getElementById(id);
 
 		const esc = (s) =>
 			String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -227,23 +434,44 @@ import Layout from '../layouts/Layout.astro';
 		};
 		const signed = (n) => (n > 0 ? '+' : '') + fmt(n);
 
+		const avatar = (r, cls) =>
+			r.image
+				? `<img src="${esc(r.image)}" alt="" loading="lazy" class="${cls || ''}" />`
+				: `<span class="ph ${cls || ''}">${esc((r.name[0] || '?').toLowerCase())}</span>`;
+
+		const rankMove = (mv) =>
+			mv.rank > 0
+				? `<span class="up">▲${mv.rank}</span>`
+				: mv.rank < 0
+					? `<span class="down">▼${-mv.rank}</span>`
+					: '<span class="flat">=</span>';
+
 		const rankCell = (mv, fallbackDelta) => {
 			if (mv === null) {
 				const sub = fallbackDelta !== undefined ? `<span class="delta">${signed(fallbackDelta)}</span>` : '';
 				return `<span class="flat">—</span>${sub}`;
 			}
 			if (mv.entered) return '<span class="entered">new</span>';
-			const arrow =
-				mv.rank > 0
-					? `<span class="up">▲${mv.rank}</span>`
-					: mv.rank < 0
-						? `<span class="down">▼${-mv.rank}</span>`
-						: '<span class="flat">=</span>';
-			return `${arrow}<span class="delta">${signed(mv.listeners)}</span>`;
+			return `${rankMove(mv)}<span class="delta">${signed(mv.listeners)}</span>`;
+		};
+
+		const chip = (label, mv, fallbackDelta) => {
+			let inner;
+			if (mv === null) {
+				inner =
+					fallbackDelta !== undefined
+						? `<span class="${fallbackDelta > 0 ? 'up' : fallbackDelta < 0 ? 'down' : 'flat'}">${signed(fallbackDelta)}</span>`
+						: '<span class="flat">—</span>';
+			} else if (mv.entered) {
+				inner = '<span class="entered">new</span>';
+			} else {
+				inner = `${rankMove(mv)} <span title="listeners">${signed(mv.listeners)}</span>`;
+			}
+			return `<span class="chip"><span class="lbl">${label}</span>${inner}</span>`;
 		};
 
 		const totalCell = (id, v) => {
-			const el = document.getElementById(id);
+			const el = $(id);
 			if (v === null || v === undefined) {
 				el.textContent = '—';
 				el.classList.add('flat');
@@ -264,42 +492,91 @@ import Layout from '../layouts/Layout.astro';
 			return;
 		}
 
-		document.getElementById('total-listeners').textContent = fmt(data.totals.listeners);
-		document.getElementById('total-daily').textContent =
-			signed(data.totals.dailyChange) + ' today';
+		// stats
+		$('total-listeners').textContent = fmt(data.totals.listeners);
+		$('total-daily').textContent = signed(data.totals.dailyChange) + ' today';
 		totalCell('total-dod', data.totals.dod ?? data.totals.dailyChange);
 		totalCell('total-wow', data.totals.wow);
 		totalCell('total-mom', data.totals.mom);
+		for (const k of ['dod', 'wow', 'mom']) {
+			$('cmp-' + k).textContent = data.compared[k] ? 'vs ' + data.compared[k] : 'history accumulating';
+		}
 
-		const rows = document.getElementById('rows');
-		rows.innerHTML = data.rows
-			.map((r) => {
-				const img = r.image
-					? `<img src="${esc(r.image)}" alt="" loading="lazy" />`
-					: '<span class="noimg"></span>';
-				return `<tr data-name="${esc(r.name.toLowerCase())}">
-					<td class="num rank">${r.rank}</td>
-					<td><span class="artist">${img}<span title="peak: #${r.peak ?? '?'}">${esc(r.name)}</span></span></td>
-					<td class="num" title="${r.listeners.toLocaleString()}">${fmt(r.listeners)}</td>
-					<td class="num">${rankCell(r.dod, r.dailyChange)}</td>
-					<td class="num">${rankCell(r.wow)}</td>
-					<td class="num">${rankCell(r.mom)}</td>
-				</tr>`;
-			})
+		// movers: rank movement when history exists, else daily listener change
+		const hasDod = data.rows.some((r) => r.dod && !r.dod.entered);
+		const metric = hasDod ? (r) => (r.dod && !r.dod.entered ? r.dod.rank : 0) : (r) => r.dailyChange || 0;
+		const moverVal = hasDod
+			? (r) => `${metric(r) > 0 ? '▲' : '▼'}${Math.abs(metric(r))}`
+			: (r) => signed(metric(r));
+		const moverRow = (r, cls) =>
+			`<div class="mover">${avatar(r)}<span class="mrank">#${r.rank}</span><span class="mname">${esc(r.name)}</span><span class="mval ${cls}">${moverVal(r)}</span></div>`;
+		const sorted = [...data.rows].sort((a, b) => metric(b) - metric(a));
+		$('climbers').innerHTML = sorted.slice(0, 5).filter((r) => metric(r) > 0).map((r) => moverRow(r, 'up')).join('') || '<div class="mover flat">none</div>';
+		$('fallers').innerHTML = sorted.slice(-5).reverse().filter((r) => metric(r) < 0).map((r) => moverRow(r, 'down')).join('') || '<div class="mover flat">none</div>';
+		const unit = hasDod ? 'by rank, dod' : 'by listeners, today';
+		$('climbers-title').textContent = 'top climbers · ' + unit;
+		$('fallers-title').textContent = 'top fallers · ' + unit;
+
+		// cards
+		$('cards').innerHTML = data.rows
+			.map(
+				(r) => `<div class="card" data-name="${esc(r.name.toLowerCase())}">
+				<div class="thumb">${avatar(r)}<span class="rank-badge">#${r.rank}</span></div>
+				<div class="card-name" title="${esc(r.name)} · peak #${r.peak ?? '?'}">${esc(r.name)}</div>
+				<div class="card-listeners" title="${r.listeners.toLocaleString()}">${fmt(r.listeners)}</div>
+				<div class="chips">${chip('d', r.dod, r.dailyChange)}${chip('w', r.wow)}${chip('m', r.mom)}</div>
+			</div>`
+			)
 			.join('');
 
-		const compared = ['dod', 'wow', 'mom']
-			.map((k) => `${k} vs ${data.compared[k] ?? 'n/a (history accumulating)'}`)
-			.join(' · ');
-		document.getElementById('footnote').innerHTML =
-			`data: <a href="https://kworb.net/spotify/listeners.html">kworb.net</a> + spotify api · updated ${esc(data.generatedAt.slice(0, 16).replace('T', ' '))} utc · ${esc(compared)}`;
+		// table
+		$('rows').innerHTML = data.rows
+			.map(
+				(r) => `<tr data-name="${esc(r.name.toLowerCase())}">
+				<td class="num rank">${r.rank}</td>
+				<td><span class="artist">${avatar(r)}<span title="peak: #${r.peak ?? '?'}">${esc(r.name)}</span></span></td>
+				<td class="num" title="${r.listeners.toLocaleString()}">${fmt(r.listeners)}</td>
+				<td class="num">${rankCell(r.dod, r.dailyChange)}</td>
+				<td class="num">${rankCell(r.wow)}</td>
+				<td class="num">${rankCell(r.mom)}</td>
+			</tr>`
+			)
+			.join('');
 
-		document.getElementById('search').addEventListener('input', (e) => {
+		// view toggle
+		const seg = $('viewseg');
+		const setView = (view) => {
+			$('cards').classList.toggle('hidden', view !== 'cards');
+			$('tablewrap').classList.toggle('hidden', view !== 'table');
+			for (const b of seg.querySelectorAll('button')) {
+				b.classList.toggle('active', b.dataset.view === view);
+			}
+			try {
+				localStorage.setItem('charles-view', view);
+			} catch {}
+		};
+		seg.addEventListener('click', (e) => {
+			if (e.target.dataset.view) setView(e.target.dataset.view);
+		});
+		let saved = 'cards';
+		try {
+			saved = localStorage.getItem('charles-view') || 'cards';
+		} catch {}
+		setView(saved === 'table' ? 'table' : 'cards');
+
+		// search filters both views
+		$('search').addEventListener('input', (e) => {
 			const q = e.target.value.trim().toLowerCase();
-			for (const tr of rows.children) {
-				tr.style.display = !q || tr.dataset.name.includes(q) ? '' : 'none';
+			for (const el of [...$('cards').children, ...$('rows').children]) {
+				el.style.display = !q || el.dataset.name.includes(q) ? '' : 'none';
 			}
 		});
+
+		const compared = ['dod', 'wow', 'mom']
+			.map((k) => `${k} vs ${data.compared[k] ?? 'n/a'}`)
+			.join(' · ');
+		$('footnote').innerHTML =
+			`data: <a href="https://kworb.net/spotify/listeners.html">kworb.net</a> + spotify api · updated ${esc(data.generatedAt.slice(0, 16).replace('T', ' '))} utc · ${esc(compared)}`;
 
 		status.classList.add('hidden');
 		content.classList.remove('hidden');

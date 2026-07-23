@@ -68,7 +68,8 @@ async function fetchArtistMeta(ids) {
 		for (const a of (await res.json()).artists ?? []) {
 			if (!a) continue;
 			meta[a.id] = {
-				image: a.images?.at(-1)?.url ?? null,
+				// images are sorted largest-first; ~320px suits card thumbnails
+				image: (a.images?.find((i) => i.width <= 320) ?? a.images?.at(-1))?.url ?? null,
 				followers: a.followers?.total ?? null,
 				popularity: a.popularity ?? null,
 			};

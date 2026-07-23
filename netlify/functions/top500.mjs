@@ -3,10 +3,11 @@ import { refresh } from './_shared/core.mjs';
 
 const STALE_MS = 26 * 3600e3;
 
-export default async () => {
+export default async (req) => {
+	const force = new URL(req.url).searchParams.get('refresh') === '1';
 	const store = getStore('top500');
 	let payload = await store.get('latest', { type: 'json' });
-	if (!payload || Date.now() - Date.parse(payload.generatedAt) > STALE_MS) {
+	if (!payload || force || Date.now() - Date.parse(payload.generatedAt) > STALE_MS) {
 		try {
 			payload = await refresh();
 		} catch (err) {
