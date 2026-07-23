@@ -5,4 +5,4 @@ export default async () => {
 	return new Response(`refreshed ${payload.rows.length} artists at ${payload.generatedAt}`);
 };
 
-export const config = { schedule: '0 10 * * *' };
+export const config = { schedule: '0 * * * *' };
