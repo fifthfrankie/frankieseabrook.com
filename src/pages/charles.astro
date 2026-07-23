@@ -1,0 +1,23 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout>
+	<main>
+		<a href="/" class="back">< back</a>
+	</main>
+</Layout>
+
+<style>
+	main {
+		max-width: 600px;
+		margin: 0 auto;
+		padding: 4rem 2rem;
+	}
+	.back {
+		color: var(--text);
+		text-decoration: none;
+		opacity: 0.6;
+	}
+	.back:hover { opacity: 1; }
+</style>
