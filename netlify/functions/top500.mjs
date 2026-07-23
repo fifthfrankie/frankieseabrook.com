@@ -21,7 +21,7 @@ export default async (req) => {
 	return new Response(JSON.stringify(payload), {
 		headers: {
 			'content-type': 'application/json',
-			'cache-control': 'public, max-age=600',
+			'cache-control': force ? 'no-store' : 'public, max-age=600',
 		},
 	});
 };
