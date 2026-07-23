@@ -174,6 +174,23 @@ async function updateSeries(store, today, artists, total) {
 	await store.setJSON('series', s);
 }
 
+// [days back, tolerance, min fallback age] per movement window;
+// null fallback age = strict (dod vs stale data would be mislabeled)
+export const WINDOWS = { dod: [1, 1, null], wow: [7, 2, 3], mom: [30, 7, 14] };
+
+// prefer a snapshot near the exact window; otherwise compare against the
+// oldest snapshot once history spans at least minAge days, so measures
+// activate early (the compared date is surfaced in the payload and UI)
+export function resolveWindowKey(keys, today, days, tol, minAge) {
+	const target = dateKey(new Date(Date.parse(today) - days * 86400e3));
+	let key = nearest(keys, target, tol);
+	if (!key && keys.length && minAge !== null) {
+		const oldest = keys[0];
+		if ((Date.parse(today) - Date.parse(oldest)) / 86400e3 >= minAge) key = oldest;
+	}
+	return key;
+}
+
 function nearest(keys, target, tolDays) {
 	let best = null;
 	let bestDiff = Infinity;
@@ -211,11 +228,9 @@ export async function refresh() {
 		.filter((k) => k < today)
 		.sort();
 
-	// [days back, tolerance in days] per movement window
-	const windows = { dod: [1, 1], wow: [7, 2], mom: [30, 7] };
 	const prev = {};
-	for (const [label, [days, tol]] of Object.entries(windows)) {
-		const key = nearest(keys, dateKey(new Date(Date.now() - days * 86400e3)), tol);
+	for (const [label, [days, tol, minAge]] of Object.entries(WINDOWS)) {
+		const key = resolveWindowKey(keys, today, days, tol, minAge);
 		prev[label] = key
 			? {
 					date: key,

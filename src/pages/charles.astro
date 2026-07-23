@@ -700,11 +700,18 @@ import Layout from '../layouts/Layout.astro';
 		const byId = Object.fromEntries(rows.map((r) => [r.id, r]));
 
 		// ---------- kpis ----------
+		// when a window has no snapshot yet, say when it activates
+		const firstDay = series.dates[0] ?? data.generatedAt.slice(0, 10);
+		const availFrom = (days) =>
+			'from ' +
+			new Date(Date.parse(firstDay) + days * 86400e3)
+				.toLocaleDateString('en', { month: 'short', day: 'numeric' })
+				.toLowerCase();
 		const kpiDefs = [
 			{ label: 'world listeners (top 500)', value: data.totals.listeners, sub: signed(data.totals.dailyChange) + ' today', plain: true },
-			{ label: 'day on day', value: data.totals.dod ?? data.totals.dailyChange, sub: data.compared.dod ? 'vs ' + data.compared.dod : 'kworb daily change', signed: true },
-			{ label: 'week on week', value: data.totals.wow, sub: data.compared.wow ? 'vs ' + data.compared.wow : 'history accumulating', signed: true },
-			{ label: 'month on month', value: data.totals.mom, sub: data.compared.mom ? 'vs ' + data.compared.mom : 'history accumulating', signed: true },
+			{ label: 'day on day', value: data.totals.dod ?? data.totals.dailyChange, sub: data.compared.dod ? 'vs ' + data.compared.dod : 'kworb daily change · snapshots ' + availFrom(1), signed: true },
+			{ label: 'week on week', value: data.totals.wow, sub: data.compared.wow ? 'vs ' + data.compared.wow : availFrom(3), signed: true },
+			{ label: 'month on month', value: data.totals.mom, sub: data.compared.mom ? 'vs ' + data.compared.mom : availFrom(14), signed: true },
 		];
 		$('kpis').innerHTML = kpiDefs
 			.map(
