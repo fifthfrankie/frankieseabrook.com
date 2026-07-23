@@ -42,7 +42,7 @@ export function parseKworb(html) {
 async function spotifyToken() {
 	const id = process.env.SPOTIFY_CLIENT_ID;
 	const secret = process.env.SPOTIFY_CLIENT_SECRET;
-	if (!id || !secret) return null;
+	if (!id || !secret) return { status: 'no-credentials', token: null };
 	const res = await fetch('https://accounts.spotify.com/api/token', {
 		method: 'POST',
 		headers: {
@@ -51,14 +51,14 @@ async function spotifyToken() {
 		},
 		body: 'grant_type=client_credentials',
 	});
-	if (!res.ok) return null;
-	return (await res.json()).access_token;
+	if (!res.ok) return { status: `auth-failed-${res.status}`, token: null };
+	return { status: 'ok', token: (await res.json()).access_token };
 }
 
 async function fetchArtistMeta(ids) {
-	const token = await spotifyToken();
+	const { status, token } = await spotifyToken();
 	const meta = {};
-	if (!token) return meta;
+	if (!token) return { meta, status };
 	for (let i = 0; i < ids.length; i += 50) {
 		const res = await fetch(
 			`https://api.spotify.com/v1/artists?ids=${ids.slice(i, i + 50).join(',')}`,
@@ -75,7 +75,7 @@ async function fetchArtistMeta(ids) {
 			};
 		}
 	}
-	return meta;
+	return { meta, status };
 }
 
 const dateKey = (d) => d.toISOString().slice(0, 10);
@@ -129,7 +129,7 @@ export async function refresh() {
 			: null;
 	}
 
-	const meta = await fetchArtistMeta(artists.map((a) => a.id));
+	const { meta, status: spotifyStatus } = await fetchArtistMeta(artists.map((a) => a.id));
 
 	const rows = artists.map((a) => {
 		const row = { ...a, ...(meta[a.id] ?? { image: null, followers: null, popularity: null }) };
@@ -161,6 +161,7 @@ export async function refresh() {
 
 	const payload = {
 		generatedAt: new Date().toISOString(),
+		spotify: spotifyStatus,
 		compared: {
 			dod: prev.dod?.date ?? null,
 			wow: prev.wow?.date ?? null,
